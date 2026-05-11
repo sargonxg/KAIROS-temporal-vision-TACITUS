@@ -1,8 +1,10 @@
 # KAIROS
 
-**Temporal vision for LLMs.** KAIROS reads prose, extracts dates and events, detects coherent episodes, and computes Allen-13 temporal relationships between them. It is built for TACITUS workflows where sequence, overlap, tenure, commitments, and institutional change matter.
+**Temporal vision for LLMs.** KAIROS reads prose, extracts dates and events, detects coherent episodes, and computes Allen-13 temporal relationships between them. It is built for TACITUS workflows where sequence, overlap, tenure, commitments, implementation drift, review windows, and institutional change matter.
 
 KAIROS ships as one Rust 1.95 binary: Axum server, embedded web UI, in-process CozoDB, and a pluggable LLM adapter. Gemini is the default production model, Ollama is supported for local open-source mode, and `KAIROS_LLM=mock` gives deterministic CI/demo output.
+
+The product thesis is simple: policy work needs a temporal perception layer. KAIROS turns long-form briefs into an inspectable time scene so downstream agents and analysts can reason over episodes, commitments, reversals, and overlapping governance phases instead of flattening everything into a summary.
 
 ## Run Locally
 
@@ -83,6 +85,12 @@ Core invariants:
 - Embedded CozoDB, no external database.
 - Gemini/Ollama/mock LLM modes selected by environment.
 - Apache-2.0 open-source repo posture.
+
+Read more:
+
+- `docs/ARCHITECTURE.md` explains the Rust crates, temporal model, Allen-13 relation layer, and learning path.
+- `docs/CAPABILITY_MAP.md` tracks what is live now and what turns KAIROS into a TACITUS backbone.
+- `examples/demo-text.md` contains the Meridian Compact Crisis, a longer policy scenario with sanctions, backchannels, implementation drift, leadership change, and institutionalization.
 
 ## Acceptance
 

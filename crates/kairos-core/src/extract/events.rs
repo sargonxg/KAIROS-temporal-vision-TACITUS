@@ -62,23 +62,43 @@ fn parse_events(value: Value) -> Result<Vec<TemporalEvent>> {
 
 fn mock_events(dates: &[DateMention]) -> Vec<TemporalEvent> {
     let labels = [
+        ("Okoye orders a temporary export pause", "emergency_order"),
+        ("Selene port unions begin rolling strikes", "labor_action"),
         (
-            "Sarah Chen announces emergency rationing",
-            "policy_announcement",
+            "Okoye convenes the first Meridian Compact round",
+            "negotiation_opening",
         ),
-        ("Mayor Hayes appoints Marcus Liu", "leadership_transition"),
-        ("Hayes announces infrastructure commitment", "commitment"),
         (
-            "Rationing ends as reservoir levels recover",
-            "de_escalation",
+            "Cabinet authorizes a $1.2B resilience package",
+            "commitment",
         ),
-        ("Greenfield pipeline construction begins", "implementation"),
-        ("Liu signs Greenfield joint-use agreement", "agreement"),
-        ("Hayes loses re-election", "regime_transition"),
-        ("Wells takes office", "regime_transition"),
         (
-            "Wells freezes new construction pending review",
-            "policy_review",
+            "Okoye announces targeted sanctions on water brokers",
+            "sanction",
+        ),
+        ("Haddad opens the Northbridge backchannel", "backchannel"),
+        (
+            "Court blocks part of the license suspension",
+            "legal_constraint",
+        ),
+        ("Parties sign the Meridian Compact", "agreement"),
+        ("Vale declares the compact in breach", "breach_claim"),
+        ("Flash flood damages the canal inspection route", "shock"),
+        ("Selene reopens one export terminal", "implementation"),
+        ("Okoye expands the sanctions list", "sanction_expansion"),
+        ("Haddad proposes a winter review window", "review_design"),
+        (
+            "Ibarra enters the national leadership race",
+            "political_pivot",
+        ),
+        ("Tomas Reed freezes new sanctions", "leadership_transition"),
+        (
+            "Reed commits to a public implementation ledger",
+            "learning_commitment",
+        ),
+        (
+            "Meridian Authority Bill creates a temporal-monitoring unit",
+            "institutionalization",
         ),
     ];
     dates

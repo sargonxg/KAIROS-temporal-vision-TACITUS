@@ -17,7 +17,16 @@ export KAIROS_LLM=mock
 cargo run --release --bin kairos-server
 ```
 
-Open `http://localhost:8080`, load the demo text, and analyze. Mock mode returns deterministic Riverdale episodes so the UI and relations can be reviewed without a Gemini key.
+Open `http://localhost:8080`, load the demo text, and analyze. Mock mode returns deterministic Meridian Compact episodes so the UI and relations can be reviewed without a Gemini key.
+
+Expected mock output:
+
+- at least 15 dates;
+- at least 15 events;
+- at least 7 actors;
+- at least 6 commitments;
+- at least 8 episodes;
+- multiple non-trivial Allen-13 relations.
 
 ## Gemini Demo
 

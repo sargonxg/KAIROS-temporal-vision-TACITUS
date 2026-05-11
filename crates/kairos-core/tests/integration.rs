@@ -10,8 +10,9 @@ async fn mock_pipeline_returns_temporal_structure() {
         .await
         .expect("mock analysis");
 
-    assert!(result.dates.len() >= 8, "expected many date mentions");
-    assert!(result.episodes.len() >= 3, "expected episode bands");
+    assert!(result.dates.len() >= 15, "expected many date mentions");
+    assert!(result.events.len() >= 15, "expected temporal events");
+    assert!(result.episodes.len() >= 8, "expected episode bands");
     assert!(
         result
             .relations
@@ -19,6 +20,6 @@ async fn mock_pipeline_returns_temporal_structure() {
             .any(|r| !matches!(r.relation, AllenRelation::Before | AllenRelation::After)),
         "expected at least one non-trivial Allen relation"
     );
-    assert!(!result.actors.is_empty(), "expected ACO actors");
-    assert!(!result.commitments.is_empty(), "expected ACO commitments");
+    assert!(result.actors.len() >= 7, "expected ACO actors");
+    assert!(result.commitments.len() >= 6, "expected ACO commitments");
 }
