@@ -1,0 +1,35 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #09090b;
+}
+
+.vis-timeline {
+  border: 1px solid #27272a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.vis-item.vis-selected {
+  box-shadow: 0 0 0 2px #09090b, 0 0 0 4px #34d399;
+}
+
+#annotated span[title] {
+  cursor: help;
+}
+
+.date-mark {
+  background: rgba(59, 130, 246, .28);
+  border-bottom: 1px solid #60a5fa;
+  color: #dbeafe;
+  padding: 0 2px;
+}
+
+.event-mark {
+  background: rgba(16, 185, 129, .24);
+  border-bottom: 1px solid #34d399;
+  color: #d1fae5;
+  padding: 0 2px;
+}

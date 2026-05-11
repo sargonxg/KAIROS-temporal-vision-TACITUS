@@ -1,0 +1,38 @@
+[workspace]
+members = ["crates/kairos-core", "crates/kairos-server"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+license = "Apache-2.0"
+repository = "https://github.com/sargonxg/KAIROS-temporal-vision-TACITUS"
+authors = ["TACITUS <opensource@tacitus.me>"]
+
+[workspace.dependencies]
+anyhow = "1"
+async-trait = "0.1"
+axum = { version = "0.7", features = ["macros"] }
+chrono = { version = "0.4", features = ["serde"] }
+cozo = { version = "0.7", default-features = false, features = ["compact"] }
+mime_guess = "2"
+regex = "1"
+rayon = "=1.10.0"
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+rust-embed = { version = "8", features = ["axum"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+uuid = { version = "1", features = ["v7", "serde"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true

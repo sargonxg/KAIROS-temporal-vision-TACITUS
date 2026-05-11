@@ -1,0 +1,10 @@
+/target
+Cargo.lock.bak
+.env
+.env.local
+*.swp
+.DS_Store
+/dist
+.idea/
+.vscode/
+*.iml

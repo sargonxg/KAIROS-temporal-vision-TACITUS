@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KAIROS Temporal Vision</title>
+    <link rel="stylesheet" href="https://unpkg.com/vis-timeline@7.7.3/styles/vis-timeline-graph2d.min.css" />
+    <link rel="stylesheet" href="/style.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vis-timeline@7.7.3/standalone/umd/vis-timeline-graph2d.min.js"></script>
+  </head>
+  <body>
+    <main class="min-h-screen bg-zinc-950 text-zinc-100">
+      <section class="border-b border-emerald-400/30 bg-[radial-gradient(circle_at_20%_0%,rgba(16,185,129,.22),transparent_30%),linear-gradient(135deg,#09090b,#111827_48%,#0f172a)]">
+        <div class="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-[1.05fr_.95fr]">
+          <div>
+            <div class="mb-5 flex items-center gap-3">
+              <div class="grid h-11 w-11 place-items-center border border-emerald-300 bg-emerald-300 text-xl font-black text-zinc-950">K</div>
+              <div>
+                <p class="text-xs uppercase tracking-[.28em] text-emerald-300">TACITUS temporal intelligence</p>
+                <h1 class="text-4xl font-black leading-tight sm:text-6xl">KAIROS</h1>
+              </div>
+            </div>
+            <p class="max-w-2xl text-lg text-zinc-300">
+              Turn political and institutional prose into dated events, actor commitments, coherent episodes, and Allen-13 temporal relations.
+            </p>
+            <div class="mt-6 flex flex-wrap gap-3 text-xs uppercase tracking-[.18em] text-zinc-400">
+              <span class="border border-zinc-700 px-3 py-2">Episodes</span>
+              <span class="border border-zinc-700 px-3 py-2">Bitemporal facts</span>
+              <span class="border border-zinc-700 px-3 py-2">Conflict ontology</span>
+              <span class="border border-zinc-700 px-3 py-2">Cloud Run ready</span>
+            </div>
+          </div>
+          <div class="border border-emerald-300/40 bg-black/50 p-4 shadow-2xl shadow-emerald-950/40">
+            <div class="grid grid-cols-3 gap-2 font-mono text-xs text-emerald-200">
+              <div class="border border-zinc-800 p-3"><span class="block text-2xl text-white" id="metric-dates">0</span>dates</div>
+              <div class="border border-zinc-800 p-3"><span class="block text-2xl text-white" id="metric-episodes">0</span>episodes</div>
+              <div class="border border-zinc-800 p-3"><span class="block text-2xl text-white" id="metric-relations">0</span>relations</div>
+            </div>
+            <pre class="mt-4 h-48 overflow-hidden whitespace-pre-wrap text-xs leading-relaxed text-zinc-400" id="signal-panel">awaiting temporal signal...</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="mx-auto max-w-7xl px-5 py-6">
+        <div class="grid gap-4 lg:grid-cols-[.9fr_1.1fr]">
+          <div>
+            <div class="mb-3 flex flex-wrap items-center gap-2">
+              <button id="btn-demo" class="border border-emerald-300 bg-emerald-300 px-4 py-2 text-sm font-bold text-zinc-950 hover:bg-emerald-200">Load demo text</button>
+              <button id="btn-analyze" class="border border-zinc-600 px-4 py-2 text-sm font-bold text-zinc-100 hover:border-emerald-300">Analyze</button>
+              <button id="btn-download" class="hidden border border-zinc-600 px-4 py-2 text-sm font-bold text-zinc-100 hover:border-emerald-300">Download JSON</button>
+            </div>
+            <textarea id="text-input" class="h-[34rem] w-full resize-y border border-zinc-700 bg-zinc-900 p-4 font-mono text-sm leading-relaxed text-zinc-100 outline-none focus:border-emerald-300" placeholder="Paste a policy memo, crisis chronology, negotiation brief, or diplomatic narrative..."></textarea>
+            <p id="status" class="mt-2 min-h-6 text-sm text-zinc-400">Ready.</p>
+          </div>
+
+          <div id="results" class="space-y-4">
+            <section class="border border-zinc-800 bg-zinc-900 p-4">
+              <h2 class="mb-3 text-sm font-bold uppercase tracking-[.18em] text-emerald-300">Timeline</h2>
+              <div id="timeline" class="min-h-72 bg-zinc-950 text-zinc-900"></div>
+            </section>
+            <section class="grid gap-4 xl:grid-cols-2">
+              <div class="border border-zinc-800 bg-zinc-900 p-4">
+                <h2 class="mb-3 text-sm font-bold uppercase tracking-[.18em] text-emerald-300">Annotated text</h2>
+                <div id="annotated" class="max-h-80 overflow-auto whitespace-pre-wrap text-sm leading-relaxed text-zinc-200"></div>
+              </div>
+              <div class="border border-zinc-800 bg-zinc-900 p-4">
+                <h2 class="mb-3 text-sm font-bold uppercase tracking-[.18em] text-emerald-300">ACO extraction</h2>
+                <div id="aco-section" class="text-sm text-zinc-200"></div>
+              </div>
+            </section>
+            <section class="border border-zinc-800 bg-zinc-900 p-4">
+              <h2 class="mb-3 text-sm font-bold uppercase tracking-[.18em] text-emerald-300">Allen-13 relations</h2>
+              <div class="max-h-64 overflow-auto">
+                <table class="w-full text-left text-sm">
+                  <tbody id="relations-tbody" class="divide-y divide-zinc-800"></tbody>
+                </table>
+              </div>
+            </section>
+            <details class="border border-zinc-800 bg-zinc-900 p-4">
+              <summary class="cursor-pointer text-sm font-bold uppercase tracking-[.18em] text-emerald-300">Raw JSON</summary>
+              <pre id="raw-json" class="mt-3 max-h-96 overflow-auto text-xs text-zinc-300"></pre>
+            </details>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

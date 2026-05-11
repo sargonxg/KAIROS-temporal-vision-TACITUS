@@ -1,0 +1,8 @@
+.git/
+.github/
+target/
+*.md
+!README.md
+.gitignore
+.env*
+node_modules/
