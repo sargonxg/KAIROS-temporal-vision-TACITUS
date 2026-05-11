@@ -40,6 +40,10 @@ $('btn-demo').addEventListener('click', () => {
 });
 
 $('btn-analyze').addEventListener('click', analyze);
+$('btn-clear-key').addEventListener('click', () => {
+  $('gemini-key').value = '';
+  $('gemini-key').focus();
+});
 
 async function analyze() {
   const text = $('text-input').value.trim();
@@ -51,10 +55,13 @@ async function analyze() {
   setStatus('Analyzing temporal structure...', 'text-amber-300');
 
   try {
+    const geminiKey = $('gemini-key').value.trim();
+    const body = { text };
+    if (geminiKey) body.gemini_api_key = geminiKey;
     const res = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify(body),
     });
     const payload = await res.json();
     if (!res.ok) throw new Error(payload.error || `HTTP ${res.status}`);

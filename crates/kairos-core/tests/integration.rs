@@ -6,6 +6,7 @@ async fn mock_pipeline_returns_temporal_structure() {
     let result = Kairos::mock()
         .analyze(AnalysisRequest {
             text: text.to_string(),
+            gemini_api_key: None,
         })
         .await
         .expect("mock analysis");

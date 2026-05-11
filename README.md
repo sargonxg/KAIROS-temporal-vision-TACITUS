@@ -21,6 +21,8 @@ export GEMINI_API_KEY="..."
 cargo run --release --bin kairos-server
 ```
 
+You can also paste a Gemini API key into the web UI for a single analysis run. The key is sent only in that `/api/analyze` request, is not saved by the browser, is not stored by the server, and is not included in exported JSON.
+
 For deterministic local demo/CI:
 
 ```bash
@@ -33,7 +35,7 @@ cargo run --release --bin kairos-server
 ```bash
 curl -s -X POST http://localhost:8080/api/analyze \
   -H 'Content-Type: application/json' \
-  -d '{"text":"January 15, 2024: Riverdale announces rationing. March 12, 2024: leadership changes."}'
+  -d '{"text":"January 15, 2024: Riverdale announces rationing. March 12, 2024: leadership changes.","gemini_api_key":"optional-per-request-key"}'
 ```
 
 Response shape:
@@ -49,6 +51,8 @@ Response shape:
   "relations": []
 }
 ```
+
+`gemini_api_key` is optional and request-scoped. When present, it forces Gemini for that analysis even if the server default is mock mode.
 
 ## Deploy To Cloud Run
 

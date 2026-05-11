@@ -16,6 +16,8 @@ use uuid::Uuid;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AnalysisRequest {
     pub text: String,
+    #[serde(default)]
+    pub gemini_api_key: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -63,11 +65,17 @@ impl Kairos {
             ));
         }
 
+        let llm = request
+            .gemini_api_key
+            .as_deref()
+            .map(str::trim)
+            .filter(|key| !key.is_empty())
+            .map(LlmClient::gemini_with_key)
+            .unwrap_or_else(|| self.llm.clone());
+
         let dates = DateExtractor::new().extract(text);
-        let (events, aco) = tokio::join!(
-            extract_events(&self.llm, text, &dates),
-            extract_aco(&self.llm, text)
-        );
+        let (events, aco) =
+            tokio::join!(extract_events(&llm, text, &dates), extract_aco(&llm, text));
         let events = events?;
         let aco = aco?;
 
@@ -78,7 +86,7 @@ impl Kairos {
             actors: &aco.actors,
             commitments: &aco.commitments,
         };
-        let detector = LlmJudgeDetector::new(self.llm.clone());
+        let detector = LlmJudgeDetector::new(llm);
         let proposals = detector.propose(&ctx).await?;
         let episodes = reconcile(proposals);
         let relations = relations_for(&episodes);

@@ -14,6 +14,7 @@ pub enum LlmProvider {
 pub struct LlmClient {
     provider: LlmProvider,
     http: Client,
+    gemini_api_key: Option<String>,
 }
 
 impl LlmClient {
@@ -30,6 +31,7 @@ impl LlmClient {
         Self {
             provider,
             http: Client::new(),
+            gemini_api_key: None,
         }
     }
 
@@ -37,6 +39,15 @@ impl LlmClient {
         Self {
             provider: LlmProvider::Mock,
             http: Client::new(),
+            gemini_api_key: None,
+        }
+    }
+
+    pub fn gemini_with_key(api_key: impl Into<String>) -> Self {
+        Self {
+            provider: LlmProvider::Gemini,
+            http: Client::new(),
+            gemini_api_key: Some(api_key.into()),
         }
     }
 
@@ -53,9 +64,12 @@ impl LlmClient {
     }
 
     async fn complete_gemini(&self, prompt: &str) -> Result<Value> {
-        let key = env::var("GEMINI_API_KEY").map_err(|_| {
-            KairosError::Llm("GEMINI_API_KEY is required for KAIROS_LLM=gemini".to_string())
-        })?;
+        let key = match &self.gemini_api_key {
+            Some(key) if !key.trim().is_empty() => key.trim().to_string(),
+            _ => env::var("GEMINI_API_KEY").map_err(|_| {
+                KairosError::Llm("GEMINI_API_KEY is required for KAIROS_LLM=gemini".to_string())
+            })?,
+        };
         let model =
             env::var("KAIROS_GEMINI_MODEL").unwrap_or_else(|_| "gemini-2.0-flash".to_string());
         let url = format!(
