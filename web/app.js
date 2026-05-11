@@ -56,8 +56,12 @@ async function analyze() {
 
   try {
     const geminiKey = $('gemini-key').value.trim();
+    const geminiModel = $('gemini-model').value.trim();
     const body = { text };
-    if (geminiKey) body.gemini_api_key = geminiKey;
+    if (geminiKey) {
+      body.gemini_api_key = geminiKey;
+      if (geminiModel) body.gemini_model = geminiModel;
+    }
     const res = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

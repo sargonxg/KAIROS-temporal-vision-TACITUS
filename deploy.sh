@@ -66,6 +66,15 @@ gcloud run deploy "${SERVICE}" \
   --set-env-vars "KAIROS_LLM=${KAIROS_LLM},RUST_LOG=info,kairos=debug" \
   "${SECRET_ARGS[@]}"
 
+# Prefer Cloud Run's public no-invoker-check path. This works when org policy
+# rejects allUsers IAM bindings but permits disabling the Invoker IAM check.
+if [ "${PUBLIC:-true}" = "true" ]; then
+  gcloud run services update "${SERVICE}" \
+    --region "${REGION}" \
+    --project "${PROJECT_ID}" \
+    --no-invoker-iam-check
+fi
+
 URL="$(gcloud run services describe "${SERVICE}" --region "${REGION}" --project "${PROJECT_ID}" --format='value(status.url)')"
 echo "Deployed: ${URL}"
 echo "Try: curl ${URL}/healthz"

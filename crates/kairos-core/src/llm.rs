@@ -15,6 +15,7 @@ pub struct LlmClient {
     provider: LlmProvider,
     http: Client,
     gemini_api_key: Option<String>,
+    gemini_model: Option<String>,
 }
 
 impl LlmClient {
@@ -32,6 +33,7 @@ impl LlmClient {
             provider,
             http: Client::new(),
             gemini_api_key: None,
+            gemini_model: None,
         }
     }
 
@@ -40,14 +42,16 @@ impl LlmClient {
             provider: LlmProvider::Mock,
             http: Client::new(),
             gemini_api_key: None,
+            gemini_model: None,
         }
     }
 
-    pub fn gemini_with_key(api_key: impl Into<String>) -> Self {
+    pub fn gemini_with_key(api_key: impl Into<String>, model: Option<String>) -> Self {
         Self {
             provider: LlmProvider::Gemini,
             http: Client::new(),
             gemini_api_key: Some(api_key.into()),
+            gemini_model: model,
         }
     }
 
@@ -70,8 +74,14 @@ impl LlmClient {
                 KairosError::Llm("GEMINI_API_KEY is required for KAIROS_LLM=gemini".to_string())
             })?,
         };
-        let model =
-            env::var("KAIROS_GEMINI_MODEL").unwrap_or_else(|_| "gemini-2.0-flash".to_string());
+        let model = self
+            .gemini_model
+            .as_deref()
+            .map(str::trim)
+            .filter(|model| !model.is_empty())
+            .map(ToString::to_string)
+            .or_else(|| env::var("KAIROS_GEMINI_MODEL").ok())
+            .unwrap_or_else(|| "gemini-2.5-flash".to_string());
         let url = format!(
             "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
         );

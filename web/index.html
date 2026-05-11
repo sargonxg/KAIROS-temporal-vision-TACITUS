@@ -57,6 +57,8 @@
                 <button id="btn-clear-key" class="border border-zinc-700 px-3 py-2 text-sm font-bold text-zinc-300 hover:border-emerald-300" type="button">Clear</button>
               </div>
               <p class="mt-2 text-xs leading-relaxed text-zinc-500">Leave empty for the server default. Add a key to test real Gemini extraction from this browser session only.</p>
+              <label class="mb-2 mt-3 block text-xs font-bold uppercase tracking-[.18em] text-zinc-500" for="gemini-model">Model</label>
+              <input id="gemini-model" class="w-full border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none focus:border-emerald-300" autocomplete="off" spellcheck="false" value="gemini-2.5-flash" />
             </div>
             <textarea id="text-input" class="h-[34rem] w-full resize-y border border-zinc-700 bg-zinc-900 p-4 font-mono text-sm leading-relaxed text-zinc-100 outline-none focus:border-emerald-300" placeholder="Paste a policy memo, crisis chronology, negotiation brief, or diplomatic narrative..."></textarea>
             <p id="status" class="mt-2 min-h-6 text-sm text-zinc-400">Ready.</p>

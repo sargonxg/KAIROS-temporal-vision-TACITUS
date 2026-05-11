@@ -10,7 +10,7 @@ The MVP is intentionally one binary and one Cloud Run service:
 - `kairos-server`: Axum API and embedded web UI.
 - `web/`: TACITUS-flavored timeline interface.
 - `deploy.sh`: one-command Cloud Run deployment once `PROJECT_ID` and `GEMINI_API_KEY` are set, or deterministic mock deployment with `KAIROS_LLM=mock`.
-- Request-scoped Gemini keys: testers can provide `gemini_api_key` in one `/api/analyze` call or paste it into the UI. KAIROS must not persist it or return it in `AnalysisResult`.
+- Request-scoped Gemini keys: testers can provide `gemini_api_key` and optional `gemini_model` in one `/api/analyze` call or paste them into the UI. KAIROS must not persist them or return them in `AnalysisResult`.
 
 Definition of done:
 

@@ -18,6 +18,8 @@ pub struct AnalysisRequest {
     pub text: String,
     #[serde(default)]
     pub gemini_api_key: Option<String>,
+    #[serde(default)]
+    pub gemini_model: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -70,7 +72,17 @@ impl Kairos {
             .as_deref()
             .map(str::trim)
             .filter(|key| !key.is_empty())
-            .map(LlmClient::gemini_with_key)
+            .map(|key| {
+                LlmClient::gemini_with_key(
+                    key,
+                    request
+                        .gemini_model
+                        .as_deref()
+                        .map(str::trim)
+                        .filter(|model| !model.is_empty())
+                        .map(ToString::to_string),
+                )
+            })
             .unwrap_or_else(|| self.llm.clone());
 
         let dates = DateExtractor::new().extract(text);

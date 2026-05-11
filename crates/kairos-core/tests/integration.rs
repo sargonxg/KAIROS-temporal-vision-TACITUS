@@ -7,6 +7,7 @@ async fn mock_pipeline_returns_temporal_structure() {
         .analyze(AnalysisRequest {
             text: text.to_string(),
             gemini_api_key: None,
+            gemini_model: None,
         })
         .await
         .expect("mock analysis");
