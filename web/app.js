@@ -33,6 +33,9 @@ January 6, 2025: The winter review concludes that the Meridian Compact prevented
 February 14, 2025: The successor framework is published as the Meridian Authority Bill. It preserves the compensation ledger, converts the verification cell into a standing temporal-monitoring unit, and requires every future emergency order to specify valid time, review time, and reversal conditions.`;
 
 const $ = (id) => document.getElementById(id);
+let lastAnalysis = null;
+let relationFilter = 'interesting';
+let corrections = {};
 
 $('btn-demo').addEventListener('click', () => {
   $('text-input').value = DEMO;
@@ -81,17 +84,24 @@ async function analyze() {
 }
 
 function render(data, text) {
+  lastAnalysis = data;
+  corrections = {};
   $('metric-dates').textContent = data.dates.length;
   $('metric-episodes').textContent = data.episodes.length;
   $('metric-relations').textContent = data.relations.length;
   $('signal-panel').textContent = summarizeSignal(data);
   $('raw-json').textContent = JSON.stringify(data, null, 2);
   $('btn-download').classList.remove('hidden');
-  $('btn-download').onclick = () => downloadJson(data);
+  $('btn-download').onclick = () => downloadJson(enrichedExport());
+  renderMode(data);
+  renderDiagnostics(data);
+  renderBrief(data);
   renderAnnotated(text, data);
   renderTimeline(data);
-  renderRelations(data);
+  renderActorLanes(data);
+  renderRelations(data, relationFilter);
   renderAco(data);
+  renderCorrections(data);
 }
 
 function summarizeSignal(data) {
@@ -182,17 +192,82 @@ function renderTimeline(data) {
   });
 }
 
-function renderRelations(data) {
+function renderMode(data) {
+  const meta = data.metadata || {};
+  $('mode-panel').textContent = `${meta.provider || 'unknown'} / ${meta.model || 'unknown'} / ${meta.elapsed_ms || 0}ms / schema ${meta.schema_version || 'legacy'}`;
+}
+
+function renderDiagnostics(data) {
+  const d = data.diagnostics || {};
+  const counts = d.relation_counts || {};
+  const countText = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, v]) => `${k}:${v}`)
+    .join('  ');
+  const warnings = d.warnings || [];
+  $('diagnostics-panel').innerHTML = `
+    ${chip('non-trivial relations', d.non_trivial_relations || 0)}
+    ${chip('overlap pairs', (d.dense_overlap_pairs || []).length)}
+    ${chip('deadline commitments', d.deadline_commitments || 0)}
+    ${chip('open-ended episodes', d.open_ended_episodes || 0)}
+    ${chip('unresolved dates', d.unresolved_dates || 0)}
+    <div class="diag-line"><strong>relations</strong><span>${escapeHtml(countText || 'none')}</span></div>
+    <div class="diag-line"><strong>warnings</strong><span>${warnings.length ? escapeHtml(warnings.join(' | ')) : 'none'}</span></div>
+  `;
+}
+
+function renderBrief(data) {
+  const episodes = data.episodes || [];
+  const commitments = data.commitments || [];
+  const dates = data.dates || [];
+  const keyEpisodes = episodes.slice(0, 4).map((ep) => `${shortDate(ep.interval.from)}: ${ep.title}`);
+  const unresolved = commitments.filter((c) => /proposed|announced|authorized|ordered|signed/i.test(c.state || '')).slice(0, 4);
+  $('brief-panel').innerHTML = `
+    <p><strong>${episodes.length}</strong> episodes convert the source into a computable chronology across <strong>${dates.length}</strong> detected temporal anchors.</p>
+    <p class="text-zinc-400">${escapeHtml(keyEpisodes.join(' -> ') || 'No episode bands detected yet.')}</p>
+    <p><strong>Commitment watch:</strong> ${escapeHtml(unresolved.map((c) => c.summary).join(' | ') || 'No active commitments detected.')}</p>
+  `;
+}
+
+function renderActorLanes(data) {
+  const actors = data.actors || [];
+  const events = data.events || [];
+  const fallbackActors = actors.length ? actors : [{ id: 'source', name: 'Source chronology', role: 'aggregate' }];
+  $('actor-lanes').innerHTML = fallbackActors.map((actor, idx) => {
+    const related = events.filter((event) => (event.actor_ids || []).includes(actor.id));
+    const laneEvents = related.length ? related : events.filter((_, i) => i % fallbackActors.length === idx).slice(0, 4);
+    return `
+      <div class="lane">
+        <div class="lane-head">
+          <strong>${escapeHtml(actor.name)}</strong>
+          <span>${escapeHtml(actor.role || 'actor')}</span>
+        </div>
+        <div class="lane-events">
+          ${laneEvents.map((event) => `<span title="${escapeHtml(event.canonical_name)}">${shortDate(event.at)}</span>`).join('') || '<em>no linked events</em>'}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderRelations(data, filter = 'interesting') {
   const epById = Object.fromEntries((data.episodes || []).map((ep) => [ep.id, ep.title]));
   const tbody = $('relations-tbody');
-  const interesting = (data.relations || []).filter((r) => !['Before', 'After'].includes(r.relation));
-  tbody.innerHTML = interesting.map((r) => `
+  const filtered = filterRelations(data.relations || [], filter);
+  tbody.innerHTML = filtered.map((r) => `
     <tr>
       <td class="py-2 pr-3 font-semibold text-zinc-100">${escapeHtml(epById[r.from_episode] || r.from_episode)}</td>
       <td class="py-2 pr-3 font-mono text-emerald-300">${escapeHtml(humanRel(r.relation))}</td>
       <td class="py-2 text-zinc-100">${escapeHtml(epById[r.to_episode] || r.to_episode)}</td>
     </tr>
-  `).join('') || '<tr><td class="py-2 text-zinc-400">Only before/after relations detected.</td></tr>';
+  `).join('') || '<tr><td class="py-2 text-zinc-400">No relations in this filter.</td></tr>';
+}
+
+function filterRelations(relations, filter) {
+  if (filter === 'all') return relations;
+  if (filter === 'overlap') return relations.filter((r) => ['Overlaps', 'OverlappedBy', 'Contains', 'During', 'Equals'].includes(r.relation));
+  if (filter === 'boundary') return relations.filter((r) => ['Meets', 'MetBy', 'Starts', 'StartedBy', 'Finishes', 'FinishedBy'].includes(r.relation));
+  return relations.filter((r) => !['Before', 'After'].includes(r.relation));
 }
 
 function renderAco(data) {
@@ -206,6 +281,35 @@ function renderAco(data) {
   `;
 }
 
+function renderCorrections(data) {
+  const episodes = (data.episodes || []).slice(0, 8);
+  $('corrections-panel').innerHTML = episodes.map((ep) => {
+    const state = corrections[ep.id] || ep.review_state || 'proposed';
+    return `
+      <div class="correction-row">
+        <span>${escapeHtml(ep.title)}</span>
+        <div class="correction-actions">
+          ${['approved', 'modified', 'rejected'].map((choice) => `<button class="${state === choice ? 'selected' : ''}" data-correction="${escapeHtml(ep.id)}" data-state="${choice}">${choice}</button>`).join('')}
+        </div>
+      </div>
+    `;
+  }).join('') || '<div class="text-zinc-500">Run analysis to review episodes.</div>';
+  document.querySelectorAll('[data-correction]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      corrections[btn.dataset.correction] = btn.dataset.state;
+      renderCorrections(lastAnalysis || data);
+      $('raw-json').textContent = JSON.stringify(enrichedExport(), null, 2);
+    });
+  });
+}
+
+function enrichedExport() {
+  return {
+    ...lastAnalysis,
+    analyst_corrections: corrections,
+  };
+}
+
 function downloadJson(data) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -214,6 +318,19 @@ function downloadJson(data) {
   a.click();
   URL.revokeObjectURL(a.href);
 }
+
+function chip(label, value) {
+  return `<div class="diag-chip"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+}
+
+document.querySelectorAll('.relation-filter').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    relationFilter = btn.dataset.filter;
+    document.querySelectorAll('.relation-filter').forEach((item) => item.classList.remove('active'));
+    btn.classList.add('active');
+    if (lastAnalysis) renderRelations(lastAnalysis, relationFilter);
+  });
+});
 
 function humanRel(relation) {
   return ({

@@ -3,7 +3,7 @@ use crate::extract::DateMention;
 use crate::llm::LlmClient;
 use crate::{KairosError, Result};
 use chrono::{DateTime, Utc};
-use serde_json::Value;
+use serde_json::{json, Value};
 use uuid::Uuid;
 
 pub async fn extract_events(
@@ -16,9 +16,32 @@ pub async fn extract_events(
     }
 
     let prompt = format!(
-        "Extract dated events from this text as JSON array. Each item must have mention, canonical_name, at (RFC3339), actor_ids array, event_kind. Output only JSON.\n\nTEXT:\n{text}"
+        "Extract dated events from this text as a JSON array matching the schema. \
+         Use only events supported by the source text. Use RFC3339 UTC timestamps in `at`. \
+         If a date is fuzzy, choose the best normalized instant and set fuzziness_secs. \
+         Output JSON only.\n\nTEXT:\n{text}"
     );
-    let value = llm.complete_json(&prompt).await?;
+    let value = llm
+        .complete_json_with_schema(
+            &prompt,
+            json!({
+                "type": "ARRAY",
+                "items": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "id": {"type": "STRING"},
+                        "mention": {"type": "STRING"},
+                        "canonical_name": {"type": "STRING"},
+                        "at": {"type": "STRING"},
+                        "fuzziness_secs": {"type": "INTEGER"},
+                        "actor_ids": {"type": "ARRAY", "items": {"type": "STRING"}},
+                        "event_kind": {"type": "STRING"}
+                    },
+                    "required": ["mention", "canonical_name", "at", "actor_ids"]
+                }
+            }),
+        )
+        .await?;
     parse_events(value)
 }
 

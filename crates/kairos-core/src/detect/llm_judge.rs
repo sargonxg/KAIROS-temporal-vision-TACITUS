@@ -5,7 +5,7 @@ use crate::pipeline::AnalysisContext;
 use crate::{KairosError, Result};
 use async_trait::async_trait;
 use chrono::{DateTime, TimeZone, Utc};
-use serde_json::Value;
+use serde_json::{json, Value};
 
 pub struct LlmJudgeDetector {
     llm: LlmClient,
@@ -25,20 +25,74 @@ impl EpisodeDetector for LlmJudgeDetector {
         }
 
         let prompt = format!(
-            "Detect coherent temporal episodes in the text. Return JSON array. Each item fields: kind, title, boundary_in {{at,rationale,triggering_events,confidence}}, optional boundary_out, anchors, narrative, confidence. kind must be one of regime,leadership,agreement,sanction,escalation,de_escalation,pivot,crisis,custom. Use RFC3339 dates. Output only JSON.\n\nDATES:{dates}\nEVENTS:{events}\nACTORS:{actors}\nCOMMITMENTS:{commitments}\nTEXT:\n{text}",
+            "Detect coherent temporal episodes in the text. Return a JSON array matching the schema. \
+             Episodes are meaningful policy/crisis intervals, not every single event. Use RFC3339 UTC dates. \
+             Keep titles concise and narratives evidence-backed. kind must be one of \
+             regime,leadership,agreement,sanction,escalation,de_escalation,pivot,crisis,custom. \
+             Output JSON only.\n\nDATES:{dates}\nEVENTS:{events}\nACTORS:{actors}\nCOMMITMENTS:{commitments}\nTEXT:\n{text}",
             dates = serde_json::to_string(ctx.dates).unwrap_or_default(),
             events = serde_json::to_string(ctx.events).unwrap_or_default(),
             actors = serde_json::to_string(ctx.actors).unwrap_or_default(),
             commitments = serde_json::to_string(ctx.commitments).unwrap_or_default(),
             text = ctx.text
         );
-        parse_proposals(self.llm.complete_json(&prompt).await?)
+        parse_proposals(
+            self.llm
+                .complete_json_with_schema(&prompt, episode_schema())
+                .await?,
+        )
     }
 }
 
+fn episode_schema() -> Value {
+    let boundary = json!({
+        "type": "OBJECT",
+        "properties": {
+            "at": {"type": "STRING"},
+            "fuzziness_secs": {"type": "INTEGER"},
+            "triggering_events": {"type": "ARRAY", "items": {"type": "STRING"}},
+            "rationale": {"type": "STRING"},
+            "confidence": {"type": "NUMBER"}
+        },
+        "required": ["at", "fuzziness_secs", "triggering_events", "rationale", "confidence"]
+    });
+    json!({
+        "type": "ARRAY",
+        "items": {
+            "type": "OBJECT",
+            "properties": {
+                "kind": {"type": "STRING"},
+                "title": {"type": "STRING"},
+                "boundary_in": boundary,
+                "boundary_out": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "at": {"type": "STRING"},
+                        "fuzziness_secs": {"type": "INTEGER"},
+                        "triggering_events": {"type": "ARRAY", "items": {"type": "STRING"}},
+                        "rationale": {"type": "STRING"},
+                        "confidence": {"type": "NUMBER"}
+                    }
+                },
+                "anchors": {"type": "ARRAY", "items": {"type": "STRING"}},
+                "narrative": {"type": "STRING"},
+                "detector": {"type": "STRING"},
+                "confidence": {"type": "NUMBER"}
+            },
+            "required": ["kind", "title", "boundary_in", "anchors", "narrative", "confidence"]
+        }
+    })
+}
+
 fn parse_proposals(value: Value) -> Result<Vec<EpisodeProposal>> {
-    serde_json::from_value(value)
-        .map_err(|e| KairosError::Extract(format!("bad episode JSON: {e}")))
+    let arr = value
+        .as_array()
+        .ok_or_else(|| KairosError::Extract("episodes response was not an array".to_string()))?;
+    Ok(arr
+        .iter()
+        .filter_map(|item| serde_json::from_value(item.clone()).ok())
+        .filter(|proposal: &EpisodeProposal| !proposal.title.trim().is_empty())
+        .collect())
 }
 
 fn mock_proposals() -> Vec<EpisodeProposal> {

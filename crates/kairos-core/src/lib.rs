@@ -2,6 +2,7 @@
 
 pub mod aco;
 pub mod detect;
+pub mod diagnostics;
 pub mod episode;
 pub mod extract;
 pub mod llm;
@@ -27,6 +28,7 @@ pub enum KairosError {
 pub type Result<T> = std::result::Result<T, KairosError>;
 
 pub use aco::{AcoKind, ExtractedActor, ExtractedCommitment, TemporalEvent};
+pub use diagnostics::{validate_graph, AnalysisMetadata, TemporalDiagnostics, ValidationRequest};
 pub use episode::{Episode, EpisodeBoundary, EpisodeKind, EpisodeProposal, ReviewState};
 pub use pipeline::{AnalysisRequest, AnalysisResult, Kairos};
 pub use relations::{AllenRelation, EpisodeRelation};

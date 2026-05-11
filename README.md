@@ -9,6 +9,26 @@ TACITUS // KAIROS
 temporal perception -> episode graph -> policy reasoning
 ```
 
+Live public demo:
+
+```text
+http://34.54.231.53
+```
+
+The Cloud Run service is deployed in `kairos-temporal-tacitus`. In this Google org, direct `run.app` URLs can return a Google edge 404 even when the revision is healthy, so the current public demo is exposed through a Google Cloud external HTTP load balancer backed by a Cloud Run serverless NEG.
+
+## What Is Live Now
+
+- Rust/Axum service with embedded web workbench.
+- Deterministic mock mode for stable public demos and CI.
+- Request-scoped Gemini testing from the screen.
+- `/api/analyze` and `/api/v1/analyze` temporal extraction endpoints.
+- `/api/v1/validate` diagnostics endpoint for already-extracted graphs.
+- Metadata and temporal diagnostics on every analysis result.
+- Browser-only analyst corrections included in downloaded JSON.
+
+Research-track items such as persistent multi-document memory, PyO3 bindings, WASM graph solving, full TimeML import/export, and cross-document coreference are roadmap items, not yet shipped.
+
 ## What It Does
 
 ```mermaid
@@ -127,6 +147,24 @@ Response shape:
 ```json
 {
   "session_id": "sess_...",
+  "metadata": {
+    "schema_version": "kairos.analysis.v1",
+    "provider": "mock",
+    "model": "deterministic-demo",
+    "mode": "deterministic_mock",
+    "input_chars": 2840,
+    "elapsed_ms": 12
+  },
+  "diagnostics": {
+    "warnings": [],
+    "relation_counts": {"Before": 14, "Overlaps": 6},
+    "non_trivial_relations": 42,
+    "open_ended_episodes": 0,
+    "dense_overlap_pairs": [],
+    "deadline_commitments": 4,
+    "unresolved_dates": 0,
+    "confidence": {"episode_min": 0.9, "episode_avg": 0.91, "episode_max": 0.92}
+  },
   "dates": [],
   "events": [],
   "actors": [],
@@ -137,6 +175,14 @@ Response shape:
 ```
 
 `gemini_api_key` and `gemini_model` are optional and request-scoped. When a key is present, that analysis uses Gemini even if the deployed server default is mock mode.
+
+Validate an existing graph without another LLM call:
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/validate \
+  -H 'Content-Type: application/json' \
+  -d '{"dates":[],"commitments":[],"episodes":[],"relations":[]}'
+```
 
 ## Demo Gate
 
@@ -168,6 +214,12 @@ For a no-key deterministic Cloud Run demo:
 PROJECT_ID="your-project-id" KAIROS_LLM=mock ./deploy.sh
 ```
 
+If your org blocks or disables direct `run.app` URLs, create the public load-balancer front door too:
+
+```bash
+PROJECT_ID="your-project-id" KAIROS_LLM=mock PUBLIC_LB=true ./deploy.sh
+```
+
 The deploy script enables required APIs, creates Artifact Registry if needed, stores the Gemini key in Secret Manager for Gemini mode, builds with Cloud Build, deploys Cloud Run, and then disables the Cloud Run Invoker IAM check for public testing when permitted.
 
 ## Verification
@@ -176,12 +228,14 @@ The deploy script enables required APIs, creates Artifact Registry if needed, st
 cargo fmt --all --check
 cargo test --release
 cargo build --release
+powershell -ExecutionPolicy Bypass -File scripts/kairos-smoke.ps1 -BaseUrl http://localhost:8080
 ```
 
 Read more:
 
 - `docs/ARCHITECTURE.md` explains the Rust crates, temporal model, Allen-13 relation layer, and learning path.
 - `docs/CAPABILITY_MAP.md` tracks what is live now and what turns KAIROS into a TACITUS backbone.
+- `docs/ROADMAP_MVP_PLUS.md` converts the deep research brief into an implementation backlog.
 - `examples/demo-text.md` contains the Meridian Compact Crisis.
 
 ## License

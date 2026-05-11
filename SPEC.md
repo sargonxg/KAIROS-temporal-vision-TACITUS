@@ -10,7 +10,23 @@ The MVP is intentionally one binary and one Cloud Run service:
 - `kairos-server`: Axum API and embedded web UI.
 - `web/`: TACITUS-flavored timeline interface.
 - `deploy.sh`: one-command Cloud Run deployment once `PROJECT_ID` and `GEMINI_API_KEY` are set, or deterministic mock deployment with `KAIROS_LLM=mock`.
+- `PUBLIC_LB=true ./deploy.sh`: optional Google Cloud external HTTP load-balancer front door for orgs where direct `run.app` URLs return Google edge 404s.
 - Request-scoped Gemini keys: testers can provide `gemini_api_key` and optional `gemini_model` in one `/api/analyze` call or paste them into the UI. KAIROS must not persist them or return them in `AnalysisResult`.
+
+MVP+ API contract:
+
+- `/api/analyze`: stable compatibility endpoint.
+- `/api/v1/analyze`: versioned alias for new clients.
+- `/api/v1/validate`: accepts extracted graph arrays and returns diagnostics without another LLM call.
+- `AnalysisResult.metadata`: schema version, provider, model, mode, input size, elapsed milliseconds.
+- `AnalysisResult.diagnostics`: warnings, relation counts, non-trivial relation count, overlap pairs, open-ended episode count, deadline commitment count, unresolved dates, confidence summary.
+- Existing arrays remain stable: `dates`, `events`, `actors`, `commitments`, `episodes`, `relations`.
+
+MVP+ UI contract:
+
+- Gemini key/model controls are visible on screen and are request-scoped only.
+- The workbench shows timeline, temporal diagnostics, temporal brief, actor lanes, annotated source, ACO extraction, filtered Allen relations, raw JSON, and browser-only analyst corrections.
+- Downloaded JSON includes `analyst_corrections`; the server does not persist corrections in this MVP+ pass.
 
 Definition of done:
 
@@ -18,6 +34,7 @@ Definition of done:
 - `cargo test --release` passes with mock LLM mode.
 - `cargo run --release --bin kairos-server` serves `http://localhost:8080`.
 - Demo analysis returns at least eight episodes and multiple non-before/after Allen relations in mock mode.
+- Smoke script verifies `/healthz`, `/`, `/api/analyze`, `/api/v1/analyze`, `/api/v1/validate`, Gemini controls, and no key leakage.
 - Cloud Run deployment is handled by `deploy.sh`.
 
 Backbone constraints:

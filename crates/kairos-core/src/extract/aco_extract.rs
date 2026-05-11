@@ -15,13 +15,89 @@ pub async fn extract_aco(llm: &LlmClient, text: &str) -> Result<AcoExtraction> {
         return Ok(mock_aco());
     }
     let prompt = format!(
-        "Extract TACITUS ACO primitives from text as JSON object with actors and commitments arrays. Actor fields: id,name,role. Commitment fields: id,summary,committer,committee,state. Output only JSON.\n\nTEXT:\n{text}"
+        "Extract TACITUS ACO primitives from text as a JSON object matching the schema. \
+         Actors are institutions, people, offices, or collective agents. Commitments are \
+         promises, obligations, deadlines, conditional actions, freezes, review windows, \
+         or implementation duties. Output JSON only.\n\nTEXT:\n{text}"
     );
-    parse_aco(llm.complete_json(&prompt).await?)
+    parse_aco(
+        llm.complete_json_with_schema(
+            &prompt,
+            json!({
+                "type": "OBJECT",
+                "properties": {
+                    "actors": {
+                        "type": "ARRAY",
+                        "items": {
+                            "type": "OBJECT",
+                            "properties": {
+                                "id": {"type": "STRING"},
+                                "name": {"type": "STRING"},
+                                "role": {"type": "STRING"},
+                                "attrs": {"type": "OBJECT"}
+                            },
+                            "required": ["id", "name", "role"]
+                        }
+                    },
+                    "commitments": {
+                        "type": "ARRAY",
+                        "items": {
+                            "type": "OBJECT",
+                            "properties": {
+                                "id": {"type": "STRING"},
+                                "summary": {"type": "STRING"},
+                                "committer": {"type": "STRING"},
+                                "committee": {"type": "STRING"},
+                                "state": {"type": "STRING"},
+                                "attrs": {"type": "OBJECT"}
+                            },
+                            "required": ["id", "summary", "committer", "committee", "state"]
+                        }
+                    }
+                },
+                "required": ["actors", "commitments"]
+            }),
+        )
+        .await?,
+    )
 }
 
 fn parse_aco(value: Value) -> Result<AcoExtraction> {
-    serde_json::from_value(value).map_err(|e| KairosError::Extract(format!("bad ACO JSON: {e}")))
+    let Some(obj) = value.as_object() else {
+        return Err(KairosError::Extract(
+            "ACO response was not an object".to_string(),
+        ));
+    };
+    let actors = obj
+        .get("actors")
+        .and_then(Value::as_array)
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(|item| serde_json::from_value(item.clone()).ok())
+                .filter(|actor: &ExtractedActor| {
+                    !actor.id.trim().is_empty() && !actor.name.trim().is_empty()
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    let commitments = obj
+        .get("commitments")
+        .and_then(Value::as_array)
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(|item| serde_json::from_value(item.clone()).ok())
+                .filter(|commitment: &ExtractedCommitment| {
+                    !commitment.id.trim().is_empty() && !commitment.summary.trim().is_empty()
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    Ok(AcoExtraction {
+        actors,
+        commitments,
+    })
 }
 
 fn mock_aco() -> AcoExtraction {

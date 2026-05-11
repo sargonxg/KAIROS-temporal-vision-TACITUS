@@ -7,6 +7,7 @@ REGION="${REGION:-us-central1}"
 SERVICE="${SERVICE:-kairos}"
 REPO="${REPO:-kairos}"
 KAIROS_LLM="${KAIROS_LLM:-gemini}"
+PUBLIC_LB="${PUBLIC_LB:-false}"
 IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${SERVICE}:latest"
 
 if [ "${KAIROS_LLM}" = "gemini" ]; then
@@ -63,7 +64,9 @@ gcloud run deploy "${SERVICE}" \
   --min-instances 0 \
   --max-instances 5 \
   --timeout 90s \
-  --set-env-vars "KAIROS_LLM=${KAIROS_LLM},RUST_LOG=info,kairos=debug" \
+  --default-url \
+  --set-env-vars "KAIROS_LLM=${KAIROS_LLM}" \
+  --set-env-vars "RUST_LOG=info,kairos=debug" \
   "${SECRET_ARGS[@]}"
 
 # Prefer Cloud Run's public no-invoker-check path. This works when org policy
@@ -75,6 +78,65 @@ if [ "${PUBLIC:-true}" = "true" ]; then
     --no-invoker-iam-check
 fi
 
+if [ "${PUBLIC_LB}" = "true" ]; then
+  NEG="${SERVICE}-neg"
+  BACKEND="${SERVICE}-backend"
+  URL_MAP="${SERVICE}-map"
+  PROXY="${SERVICE}-http-proxy"
+  RULE="${SERVICE}-http-rule"
+
+  gcloud services enable compute.googleapis.com --project "${PROJECT_ID}"
+
+  if ! gcloud compute network-endpoint-groups describe "${NEG}" --region="${REGION}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
+    gcloud compute network-endpoint-groups create "${NEG}" \
+      --project "${PROJECT_ID}" \
+      --region "${REGION}" \
+      --network-endpoint-type serverless \
+      --cloud-run-service "${SERVICE}"
+  fi
+
+  if ! gcloud compute backend-services describe "${BACKEND}" --global --project="${PROJECT_ID}" >/dev/null 2>&1; then
+    gcloud compute backend-services create "${BACKEND}" \
+      --project "${PROJECT_ID}" \
+      --global \
+      --load-balancing-scheme=EXTERNAL_MANAGED
+  fi
+
+  if ! gcloud compute backend-services describe "${BACKEND}" --global --project="${PROJECT_ID}" \
+    --format='value(backends[0].group)' | grep -q "${NEG}"; then
+    gcloud compute backend-services add-backend "${BACKEND}" \
+      --project "${PROJECT_ID}" \
+      --global \
+      --network-endpoint-group="${NEG}" \
+      --network-endpoint-group-region="${REGION}"
+  fi
+
+  if ! gcloud compute url-maps describe "${URL_MAP}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
+    gcloud compute url-maps create "${URL_MAP}" \
+      --project "${PROJECT_ID}" \
+      --default-service="${BACKEND}"
+  fi
+
+  if ! gcloud compute target-http-proxies describe "${PROXY}" --project="${PROJECT_ID}" >/dev/null 2>&1; then
+    gcloud compute target-http-proxies create "${PROXY}" \
+      --project "${PROJECT_ID}" \
+      --url-map="${URL_MAP}"
+  fi
+
+  if ! gcloud compute forwarding-rules describe "${RULE}" --global --project="${PROJECT_ID}" >/dev/null 2>&1; then
+    gcloud compute forwarding-rules create "${RULE}" \
+      --project "${PROJECT_ID}" \
+      --global \
+      --target-http-proxy="${PROXY}" \
+      --ports=80
+  fi
+fi
+
 URL="$(gcloud run services describe "${SERVICE}" --region "${REGION}" --project "${PROJECT_ID}" --format='value(status.url)')"
 echo "Deployed: ${URL}"
 echo "Try: curl ${URL}/healthz"
+if [ "${PUBLIC_LB}" = "true" ]; then
+  LB_IP="$(gcloud compute forwarding-rules describe "${SERVICE}-http-rule" --global --project "${PROJECT_ID}" --format='value(IPAddress)')"
+  echo "Public load balancer: http://${LB_IP}"
+  echo "Try: curl http://${LB_IP}/healthz"
+fi

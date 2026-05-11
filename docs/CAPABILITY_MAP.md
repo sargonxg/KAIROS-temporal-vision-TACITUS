@@ -12,9 +12,24 @@ This map is the working contract for turning KAIROS from an MVP into a temporal 
 | Episode proposals | Live | `EpisodeDetector` trait and `LlmJudgeDetector` implementation. |
 | Episode reconciliation | Live | Current reconciler sorts and normalizes proposals into `Episode` entities. |
 | Allen-13 relation graph | Live | Pairwise relation computation over all episodes. |
-| Embedded UI | Live | Annotated text, timeline, ACO panel, relation table, JSON export. |
+| Analysis metadata | Live | Every result reports schema version, provider, model, mode, input size, and elapsed time. |
+| Temporal diagnostics | Live | Relation counts, overlap pairs, open-ended episodes, deadline commitments, unresolved dates, warnings, and confidence summary. |
+| Validation API | Live | `/api/v1/validate` computes diagnostics without another LLM call. |
+| Embedded UI | Live | Timeline, diagnostics, temporal brief, actor lanes, annotated text, ACO panel, filtered relation table, JSON export. |
 | Cloud Run deployment | Live | `Dockerfile` and `deploy.sh`. |
+| Public Google Cloud front door | Live | External HTTP load balancer at `http://34.54.231.53` backed by a Cloud Run serverless NEG. |
 | No-key demo mode | Live | `KAIROS_LLM=mock` returns a complex deterministic policy scenario. |
+| Request-scoped Gemini testing | Live | UI and API accept a temporary Gemini key for one run; it is not saved or returned. |
+
+## MVP+ Implemented
+
+| Capability | Status | Evidence |
+|---|---:|---|
+| Versioned API surface | Implemented | `/api/v1/analyze` aliases the stable analysis path. |
+| Browser-only analyst corrections | Implemented | Users can mark episodes approved, modified, or rejected; exported JSON includes corrections. |
+| Relation filters | Implemented | UI filters all, overlap, boundary, and high-signal relations. |
+| Temporal brief | Implemented | UI summarizes episode count, key episode sequence, and commitment watch. |
+| Smoke verification | Implemented | `scripts/kairos-smoke.ps1` checks local or live services end to end. |
 
 ## Backbone-Grade Next Steps
 

@@ -4,7 +4,7 @@ use axum::http::{header, HeaderValue, StatusCode, Uri};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
-use kairos_core::{AnalysisRequest, Kairos};
+use kairos_core::{validate_graph, AnalysisRequest, Kairos, ValidationRequest};
 use rust_embed::RustEmbed;
 use std::env;
 use std::net::SocketAddr;
@@ -28,6 +28,8 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .route("/healthz", get(|| async { "ok" }))
         .route("/api/analyze", post(analyze))
+        .route("/api/v1/analyze", post(analyze))
+        .route("/api/v1/validate", post(validate))
         .fallback(static_handler)
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())
@@ -39,6 +41,10 @@ async fn main() -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await?;
     Ok(())
+}
+
+async fn validate(Json(req): Json<ValidationRequest>) -> impl IntoResponse {
+    (StatusCode::OK, Json(validate_graph(&req))).into_response()
 }
 
 async fn analyze(
