@@ -4,6 +4,9 @@
 
 KAIROS turns long-form political, legal, diplomatic, and institutional text into a **temporal knowledge graph**: dated events, canonical actors, commitments, friction, hypotheses, episodes, Allen-13 temporal relations, and source-grounded evidence spans.
 
+> ⚠️ **Experimental work in progress.** MVP+ library and demo, breaking changes possible.
+> **Feedback, issues, PRs welcome** — see [Status & how to engage](#status--how-to-engage).
+
 ```text
 TACITUS → KAIROS
 raw prose → conflict vision → temporal graph → policy reasoning
@@ -172,9 +175,19 @@ curl -X POST http://localhost:8080/api/v1/validate -H 'Content-Type: application
 
 ---
 
-## Status
+## Status & how to engage
 
-KAIROS is an MVP-plus library and demo service. Usable today for deterministic demos, local development, and real Gemini-backed extraction experiments.
+KAIROS is **experimental work in progress** — an MVP-plus library and demo service. Usable today for deterministic demos, local development, and real Gemini-backed extraction experiments.
+
+**Comments welcome — preferred channels:**
+- 💬 **[GitHub Discussions](https://github.com/sargonxg/KAIROS-temporal-vision-TACITUS/discussions)** — ideas, questions, temporal edge cases worth handling
+- 🐛 **[Issues](https://github.com/sargonxg/KAIROS-temporal-vision-TACITUS/issues)** — bugs, date-resolution misses, Allen-relation surprises
+- 📬 **[tacitus.me](https://www.tacitus.me)** — direct contact
+- 🔀 **PRs** — golden-fixture tests required for any extraction or relation change; see [`ROADMAP.md`](ROADMAP.md) for priorities
+
+If you run a real policy/legal/diplomatic document through KAIROS and the temporal structure surprises you, that's the most useful feedback.
+
+
 
 **Live now:**
 - Rust workspace with `kairos-core` + `kairos-server`
