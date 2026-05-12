@@ -30,6 +30,30 @@ November 12, 2024: Ibarra enters the national leadership race and recasts the co
 
 December 3, 2024: Deputy Minister Tomas Reed takes over the water portfolio and freezes new sanctions pending the winter review. Vale returns to the table, Soren keeps the port open, and Haddad begins drafting a successor framework for 2025.
 
+December 16, 2024: Transcript excerpt, Haddad: "The freeze buys time, but it does not answer who can reverse a failed order." Reed answers that the ministry will publish a draft authority map by January 3, 2025.
+
 January 6, 2025: The winter review concludes that the Meridian Compact prevented a full basin shutdown but failed to produce durable trust. Reed commits to a public implementation ledger, monthly satellite audits, and a February 2025 decision on whether to convert the compact into a permanent basin authority.
 
+January 21, 2025: Dr. Mei Liao, newly appointed director of the verification cell, warns that payment records and satellite evidence still disagree in four districts. Vale says the discrepancy proves bad faith; Reed says it proves data fragmentation.
+
+January 29, 2025: A leaked note from Ibarra's campaign claims the February decision should be delayed until after the party convention. Soren calls the note procedural obstruction and says port crews will not accept another indefinite review.
+
 February 14, 2025: The successor framework is published as the Meridian Authority Bill. It preserves the compensation ledger, converts the verification cell into a standing temporal-monitoring unit, and requires every future emergency order to specify valid time, review time, and reversal conditions.
+
+February 18, 2025: The Administrative Court schedules a March 7, 2025 hearing on whether old injunctions still constrain the new bill. The court clerk notes that no party has filed a clean timeline of valid orders, reversals, and expired sanctions.
+
+March 7, 2025: The hearing exposes a contradiction: Okoye's April 2024 suspension order was partly blocked, but the September 2024 sanctions expansion relied on the same authority. Reed asks for a narrow ruling; broker counsel asks the court to void the entire chain.
+
+March 20, 2025: Jonas Silva is named interim basin authority chair. Silva promises a 30-day implementation reset, but Liao warns that resetting deadlines without preserving evidence will erase the audit trail.
+
+April 4, 2025: Public statement, Vale: "We will cooperate with Silva if payments and canal audits are dated, signed, and reversible." Ibarra replies that Selene will not keep a terminal open under a moving deadline.
+
+April 17, 2025: Internal memo from the verification cell finds that three districts reported completion before field teams arrived. Liao labels the gap a source-integrity warning rather than proof of fraud.
+
+May 1, 2025: The authority releases its first temporal ledger. It lists every order, commitment, review window, and reversal condition, but flags two unresolved contradictions for ministerial review.
+
+May 19, 2025: Reed tells parliament that the ledger has reduced rumor-driven escalation, while Soren testifies that workers still lack a reliable compensation trigger when audits slip.
+
+June 2, 2025: The basin authority votes to keep emergency powers active through July 31, 2025. Vale supports the extension only if the authority publishes missed-deadline reasons within 48 hours.
+
+July 31, 2025: The emergency powers expire on schedule, but Silva asks for a successor vote after new reservoir data shows another dry quarter. Haddad warns that scarcity pressure is returning faster than institutional trust.

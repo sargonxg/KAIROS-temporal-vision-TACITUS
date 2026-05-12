@@ -197,7 +197,8 @@ fn resolve_contextual_relatives(
     let mut previous_resolved = document_created_at;
     for mention in mentions {
         if mention.resolved.is_none() && mention.kind == DateMentionKind::Relative {
-            mention.resolved = previous_resolved.and_then(|anchor| resolve_relative(&mention.text, anchor));
+            mention.resolved =
+                previous_resolved.and_then(|anchor| resolve_relative(&mention.text, anchor));
         }
         if mention.resolved.is_some() && !matches!(mention.kind, DateMentionKind::Duration) {
             previous_resolved = mention.resolved;

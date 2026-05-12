@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
 
+#[path = "source/index.rs"]
+pub mod index;
+
 #[derive(Clone, Debug, Serialize, Deserialize, Default, PartialEq, Eq)]
 pub struct SourceSpan {
     #[serde(default, skip_serializing_if = "Option::is_none")]

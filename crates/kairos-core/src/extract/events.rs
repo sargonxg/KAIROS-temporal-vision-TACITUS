@@ -131,17 +131,30 @@ fn mock_events(dates: &[DateMention]) -> Vec<TemporalEvent> {
     dates
         .iter()
         .filter_map(|d| d.resolved.map(|at| (d, at)))
-        .take(labels.len())
-        .zip(labels)
-        .map(|((d, at), (name, kind))| TemporalEvent {
-            id: format!("evt_{}", Uuid::now_v7()),
-            mention: name.to_string(),
-            canonical_name: name.to_string(),
-            at,
-            fuzziness_secs: 0,
-            actor_ids: vec![],
-            event_kind: Some(kind.to_string()),
-            source_span: d.source_span.clone(),
+        .enumerate()
+        .map(|(idx, (d, at))| {
+            let (name, kind) = labels
+                .get(idx)
+                .copied()
+                .unwrap_or(("Dossier chronology update", "chronology_update"));
+            TemporalEvent {
+                id: format!("evt_{}", Uuid::now_v7()),
+                mention: if name == "Dossier chronology update" {
+                    format!("{} chronology update", d.text)
+                } else {
+                    name.to_string()
+                },
+                canonical_name: if name == "Dossier chronology update" {
+                    format!("{} chronology update", d.text)
+                } else {
+                    name.to_string()
+                },
+                at,
+                fuzziness_secs: 0,
+                actor_ids: vec![],
+                event_kind: Some(kind.to_string()),
+                source_span: d.source_span.clone(),
+            }
         })
         .collect()
 }

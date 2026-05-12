@@ -161,6 +161,22 @@ fn mock_proposals() -> Vec<EpisodeProposal> {
             "Verification moves from ad hoc reconciliation of evidence to a proposed standing temporal-monitoring unit.",
             vec!["verification cell".to_string(), "temporal-monitoring unit".to_string()],
         ),
+        proposal(
+            EpisodeKind::Crisis,
+            "Contradiction And Warning Cycle",
+            "2024-06-17T00:00:00Z",
+            Some("2024-11-01T00:00:00Z"),
+            "Breach claims, audit uncertainty, broker leakage, and review warnings create an explicit contradiction cycle.",
+            vec!["breach".to_string(), "warnings".to_string()],
+        ),
+        proposal(
+            EpisodeKind::Agreement,
+            "Successor Authority Formation",
+            "2025-01-06T00:00:00Z",
+            Some("2025-02-28T00:00:00Z"),
+            "The failed trust posture is converted into a bill, ledger, and authority-design window.",
+            vec!["Authority Bill".to_string(), "successor framework".to_string()],
+        ),
     ]
 }
 

@@ -217,6 +217,34 @@ fn validation_warnings(
         }
     }
 
+    if frictions
+        .iter()
+        .any(|friction| friction.summary.to_lowercase().contains("premature"))
+    {
+        warnings.push(
+            "contradiction: terminal reopening claim conflicts with incomplete audit evidence"
+                .to_string(),
+        );
+    }
+    if frictions.iter().any(|friction| {
+        friction.summary.to_lowercase().contains("administrative")
+            || friction
+                .competing_hypotheses
+                .iter()
+                .any(|hypothesis| hypothesis.to_lowercase().contains("political"))
+    }) {
+        warnings.push(
+            "warning: administrative-delay and political-delay explanations remain competing hypotheses"
+                .to_string(),
+        );
+    }
+    if frictions.len() >= 10 {
+        warnings.push(
+            "warning: dense friction field requires analyst review before operational use"
+                .to_string(),
+        );
+    }
+
     for date in dates {
         if date.resolved.is_none() {
             warnings.push(format!("date '{}' could not be resolved", date.text));

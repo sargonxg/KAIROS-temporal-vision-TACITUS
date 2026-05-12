@@ -1,193 +1,201 @@
 # KAIROS
 
-**Temporal vision for policy intelligence.** KAIROS is a Rust-first TACITUS tool that turns long-form prose into dates, events, actors, commitments, canonical episodes, and Allen-13 temporal relations.
+Rust-first conflict vision for TACITUS.
 
-It is built for the problem normal LLM summaries flatten: policy time is not a list. Sanctions overlap negotiations. Leadership tenures contain crises. Review windows meet implementation phases. Commitments drift, expire, restart, or become institutions. KAIROS gives downstream agents a structured time scene instead of a paragraph blur.
+KAIROS turns long-form political, legal, diplomatic, and institutional text into a temporal knowledge graph: dated events, canonical actors, commitments, friction, hypotheses, episodes, Allen-13 temporal relations, and source-grounded evidence spans.
+
+It is part of the broader TACITUS mission at [tacitus.me](https://www.tacitus.me): build serious analytical infrastructure for policy, diplomacy, governance, conflict analysis, and institutional decision support. TACITUS products need more than summarization. They need systems that can see when a claim was true, which actor owned it, when a commitment slipped, which legal or political blockage changed the trajectory, and what evidence supports the inference.
 
 ```text
-TACITUS // KAIROS
-temporal perception -> episode graph -> policy reasoning
+TACITUS -> KAIROS
+raw prose -> conflict vision -> temporal graph -> policy reasoning
 ```
 
-Live public demo:
+## Why This Exists
+
+Most AI systems flatten time. They summarize a dossier as a sequence of events and lose the structure that actually matters:
+
+- sanctions can overlap negotiations;
+- court rulings can interrupt enforcement without ending it;
+- leaders can change while institutions preserve old commitments;
+- review windows can meet implementation phases;
+- delay can be administrative, political, legal, or strategic;
+- trust can degrade before anyone says "conflict" explicitly.
+
+KAIROS is designed to give TACITUS systems a computable scene instead of a paragraph summary. PRAXIS can reason about crisis windows and implementation slippage. DIALECTICA can ground arguments in what was true before, during, and after an episode. Future TACITUS agents can query temporal structure instead of repeatedly re-reading raw text.
+
+## Current Status
+
+KAIROS is an MVP-plus library and demo service. It is usable today for deterministic demos, local development, and real Gemini-backed extraction experiments, but it is not yet a persistent multi-document production memory system.
+
+Live now:
+
+- Rust workspace with `kairos-core` and `kairos-server`.
+- Embedded Axum web workbench.
+- Deterministic mock mode for repeatable CI and public demos.
+- Request-scoped Gemini key testing from the browser.
+- Pre-read segmentation and tension-marker detection.
+- Actor canonicalization and alias registry.
+- Actor, commitment, event, friction, episode, hypothesis, and graph outputs.
+- Allen-13 temporal relation computation.
+- `/api/analyze`, `/api/v1/analyze`, `/api/v1/graph`, and `/api/v1/validate`.
+- Source-span indexing for evidence traceability.
+- Cloud Run deployment path.
+
+Still roadmap:
+
+- persistent multi-document memory;
+- true corpus-level graph merge;
+- production-grade cross-document coreference;
+- full TimeML import/export;
+- trained local neural models;
+- PyO3/WASM packaging.
+
+## Demo
+
+Public demo:
 
 ```text
 http://34.54.231.53
 ```
 
-The Cloud Run service is deployed in `kairos-temporal-tacitus`. In this Google org, direct `run.app` URLs can return a Google edge 404 even when the revision is healthy, so the current public demo is exposed through a Google Cloud external HTTP load balancer backed by a Cloud Run serverless NEG.
+The demo loads the Meridian Compact crisis dossier, a synthetic but realistic conflict-governance case containing dated entries, transcript excerpts, legal blockage, missed deadlines, leadership transition, trust loss, and competing explanations.
 
-## What Is Live Now
+The deterministic demo currently proves at least:
 
-- Rust/Axum service with embedded web workbench.
-- Deterministic mock mode for stable public demos and CI.
-- Request-scoped Gemini testing from the screen.
-- `/api/analyze` and `/api/v1/analyze` temporal extraction endpoints.
-- `/api/v1/validate` diagnostics endpoint for already-extracted graphs.
-- Metadata and temporal diagnostics on every analysis result.
-- Browser-only analyst corrections included in downloaded JSON.
+```text
+30+ dates
+25+ events
+10+ actors
+10+ commitments
+10+ friction objects
+3+ hypotheses
+10+ episodes
+80+ Allen relations
+```
 
-Research-track items such as persistent multi-document memory, PyO3 bindings, WASM graph solving, full TimeML import/export, and cross-document coreference are roadmap items, not yet shipped.
+With a Gemini API key pasted into the UI, users can analyze their own case text. The key is used for that single request, is not stored by the browser or server, and is not included in exported JSON.
 
-## What It Does
+## Repository Layout
+
+```text
+.
+├── crates/
+│   ├── kairos-core/        # Rust library: pipeline, models, extraction, graph, diagnostics
+│   └── kairos-server/      # Axum server with embedded static frontend
+├── docs/                   # Architecture, capability map, research plan, roadmap
+├── examples/
+│   ├── demo-text.md        # Large Meridian Compact dossier
+│   └── eval/               # Focused regression fixtures
+├── scripts/
+│   └── kairos-smoke.ps1    # Public smoke test
+├── web/                    # Simple frontend workbench
+├── deploy.sh               # Cloud Run deployment script
+├── BUILD.md                # Build and deployment playbook
+└── README.md
+```
+
+## Architecture
 
 ```mermaid
 flowchart LR
-  A[Policy brief / chronology / memo] --> B[Date extractor]
-  A --> C[Event extractor]
-  A --> D[ACO actor + commitment extractor]
-  B --> E[Episode detector]
-  C --> E
-  D --> E
-  E --> F[Episode reconciler]
-  F --> G[Allen-13 relation graph]
-  G --> H[Timeline UI + JSON API]
+  A[Policy memo / crisis dossier / transcript] --> P[Pre-read segmentation]
+  P --> D[Date extraction]
+  P --> E[Event extraction]
+  P --> C[Actor + commitment extraction]
+  C --> R[Actor registry]
+  D --> F[Friction detection]
+  E --> F
+  R --> F
+  F --> H[Cautious hypotheses]
+  D --> EP[Episode detection]
+  E --> EP
+  EP --> AL[Allen-13 relations]
+  F --> G[Temporal knowledge graph]
+  H --> G
+  AL --> G
+  G --> API[API + web workbench]
 ```
 
-KAIROS outputs:
+Core design choices:
 
-- `dates`: character spans, resolved timestamps, fuzziness.
-- `events`: canonical temporal events with anchors.
-- `actors`: TACITUS ACO actor primitives.
-- `commitments`: who committed what, to whom, in what state.
-- `frictions`: broken commitments, obstruction, drift, trust loss, implementation gaps, and escalation pressure.
-- `episodes`: coherent intervals with boundaries, anchors, confidence, and review state.
-- `relations`: pairwise Allen-13 temporal relations.
-- `diagnostics`: relation counts, friction counts, unresolved dates, warnings, and confidence posture.
+- Deterministic Rust owns dates, source spans, diagnostics, relations, graph assembly, and mock behavior.
+- LLMs refine structured extraction but do not define the whole architecture.
+- Gemini is one provider path, not the product boundary.
+- The public API keeps one simple `AnalysisRequest` and one rich `AnalysisResult`.
+- Graph IDs are stable strings for now; heavier graph storage can come later when mutation pressure is real.
 
-## Why It Matters
+## Output Model
 
-```mermaid
-timeline
-  title Meridian Compact Crisis
-  2024-01 : Basin scarcity crisis begins
-  2024-02 : Compact negotiation opens
-  2024-03 : Water-broker sanctions start
-  2024-05 : Meridian Compact signed
-  2024-06 : Implementation drift appears
-  2024-09 : Verification cell emerges
-  2024-12 : Reed review phase begins
-  2025-02 : Temporal-monitoring unit proposed
-```
+`AnalysisResult` includes:
 
-KAIROS is designed to become a backbone for TACITUS products:
+- `pre_read`: document type, segments, speaker turns, chronology blocks, tension markers, inferred creation time.
+- `dates`: temporal mentions with spans, resolution, fuzziness, and date kind.
+- `events`: canonical events with timestamps and optional source spans.
+- `actors`: extracted actor primitives.
+- `actor_registry`: canonical actors and deterministic aliases.
+- `commitments`: who committed what, to whom, and in what state.
+- `frictions`: conflict/cooperation/ambiguity signals with mechanism, directness, evidence grade, trajectory, competing hypotheses, and source evidence.
+- `hypotheses`: cautious inference objects that cite supporting friction and never overwrite extracted facts.
+- `episodes`: coherent temporal intervals with boundaries, anchors, confidence, and review state.
+- `relations`: Allen-13 relations between episodes.
+- `source_index`: object-to-span and object-to-segment lookup.
+- `graph_summary`: graph node and edge counts by type.
+- `graph`: document, source-span, actor, alias, event, timex, commitment, friction, episode, contradiction, and hypothesis nodes with typed edges.
+- `diagnostics`: warnings, relation counts, unresolved dates, friction posture, and confidence summary.
 
-- PRAXIS can reason about crisis windows, implementation slippage, and review phases.
-- DIALECTICA can ground arguments in what was true before, during, and after an episode.
-- TACITUS analysis agents can query temporal structure instead of re-reading raw text.
+## Quick Start
 
-## Rust Architecture
+Requirements:
 
-```mermaid
-flowchart TB
-  subgraph core[kairos-core]
-    T[temporal.rs<br/>Validity, transaction, bitemporal intervals]
-    R[relations.rs<br/>Allen-13 algebra]
-    A[aco.rs<br/>Actor, commitment, event primitives]
-    E[episode.rs<br/>Episode + boundary types]
-    X[extract/*<br/>dates, events, ACO]
-    D[detect/*<br/>detector trait + LLM judge]
-    P[pipeline.rs<br/>orchestrator]
-    S[store.rs<br/>embedded Cozo]
-  end
-  subgraph server[kairos-server]
-    HTTP[Axum API]
-    UI[Embedded hacker-style UI]
-  end
-  P --> HTTP
-  UI --> HTTP
-```
+- Rust toolchain from `rust-toolchain.toml`.
+- Node.js only for `node --check web/app.js`.
+- PowerShell for the smoke script on Windows.
 
-Core invariants:
-
-- One deployable binary.
-- Fast Rust interval and relation logic.
-- Embedded static UI.
-- Embedded CozoDB, no external database for the MVP.
-- Gemini, Ollama, and deterministic mock modes.
-- Request-scoped Gemini key testing from the UI.
-
-## Run Locally
+Run the deterministic local demo:
 
 ```bash
-cargo run --release --bin kairos-server
+KAIROS_LLM=mock cargo run --release --bin kairos-server
 ```
 
-Open `http://localhost:8080`, click `Load demo text`, then `Analyze`.
+Open:
 
-For deterministic local demo/CI:
-
-```bash
-export KAIROS_LLM=mock
-cargo run --release --bin kairos-server
+```text
+http://localhost:8080
 ```
 
 For server-side Gemini:
 
 ```bash
-export GEMINI_API_KEY="..."
-export KAIROS_GEMINI_MODEL="gemini-2.5-flash"
-cargo run --release --bin kairos-server
+GEMINI_API_KEY="..." KAIROS_LLM=gemini cargo run --release --bin kairos-server
 ```
 
-You can also paste a Gemini API key into the web UI for a single analysis run. The key is sent only in that `/api/analyze` request, is not saved by the browser, is not stored by the server, and is not included in exported JSON.
+You can also leave the server in mock mode and paste a Gemini key into the UI for a single browser-initiated analysis.
 
 ## API
 
+Analyze text:
+
 ```bash
-curl -s -X POST http://localhost:8080/api/analyze \
+curl -s -X POST http://localhost:8080/api/v1/analyze \
   -H 'Content-Type: application/json' \
   -d '{
     "text": "January 15, 2024: Riverdale announces rationing. March 12, 2024: leadership changes.",
-    "document_id": "demo-brief-001",
+    "document_id": "case-001",
     "document_created_at": "2024-03-12T00:00:00Z",
-    "gemini_api_key": "optional-per-request-key",
-    "gemini_model": "gemini-2.5-flash"
+    "analysis_mode": "auto"
   }'
 ```
 
-Response shape:
+Export only the graph:
 
-```json
-{
-  "session_id": "sess_...",
-  "metadata": {
-    "schema_version": "kairos.analysis.v1",
-    "provider": "mock",
-    "model": "deterministic-demo",
-    "mode": "deterministic_mock",
-    "input_chars": 2840,
-    "elapsed_ms": 12
-  },
-  "diagnostics": {
-    "warnings": [],
-    "relation_counts": {"Before": 14, "Overlaps": 6},
-    "non_trivial_relations": 42,
-    "open_ended_episodes": 0,
-    "friction_count": 6,
-    "escalating_friction_count": 2,
-    "high_intensity_friction_count": 5,
-    "friction_by_kind": {"commitment_failure": 1, "institutional_drift": 1},
-    "dense_overlap_pairs": [],
-    "deadline_commitments": 4,
-    "unresolved_dates": 0,
-    "confidence": {"episode_min": 0.9, "episode_avg": 0.91, "episode_max": 0.92}
-  },
-  "dates": [],
-  "events": [],
-  "actors": [],
-  "commitments": [],
-  "frictions": [],
-  "episodes": [],
-  "relations": []
-}
+```bash
+curl -s -X POST http://localhost:8080/api/v1/graph \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"January 15, 2024: Riverdale announces rationing."}'
 ```
 
-`gemini_api_key` and `gemini_model` are optional and request-scoped. When a key is present, that analysis uses Gemini even if the deployed server default is mock mode.
-
-`document_id` and `document_created_at` are optional but important for serious use. When `document_created_at` is present, KAIROS can resolve relative expressions like `two days later`, `next week`, and `next quarter` against the document creation time.
-
-Validate an existing graph without another LLM call:
+Validate an already extracted graph:
 
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/validate \
@@ -195,62 +203,68 @@ curl -s -X POST http://localhost:8080/api/v1/validate \
   -d '{"dates":[],"commitments":[],"episodes":[],"relations":[]}'
 ```
 
-## Demo Gate
+Request fields:
 
-The built-in Meridian Compact Crisis mock demo currently returns:
-
-```text
-23 dates
-17 events
-7 actors
-6 commitments
-6 friction objects
-8 episodes
-56 Allen relations
-42 non-trivial relations
-```
-
-That is the minimum public demo posture: it should visibly prove overlapping temporal structure, not just chronology extraction.
-
-## Deploy To Cloud Run
-
-```bash
-export PROJECT_ID="your-project-id"
-export GEMINI_API_KEY="..."
-./deploy.sh
-```
-
-For a no-key deterministic Cloud Run demo:
-
-```bash
-PROJECT_ID="your-project-id" KAIROS_LLM=mock ./deploy.sh
-```
-
-If your org blocks or disables direct `run.app` URLs, create the public load-balancer front door too:
-
-```bash
-PROJECT_ID="your-project-id" KAIROS_LLM=mock PUBLIC_LB=true ./deploy.sh
-```
-
-The deploy script enables required APIs, creates Artifact Registry if needed, stores the Gemini key in Secret Manager for Gemini mode, builds with Cloud Build, deploys Cloud Run, and then disables the Cloud Run Invoker IAM check for public testing when permitted.
+- `text` is required.
+- `document_id` is optional but recommended for source-span traceability.
+- `document_created_at` is optional and helps resolve relative dates.
+- `analysis_mode` accepts `auto`, `single`, `dossier`, and `corpus`.
+- `gemini_api_key` and `gemini_model` are optional request-scoped overrides.
 
 ## Verification
+
+Run before pushing:
 
 ```bash
 cargo fmt --all --check
 cargo test --release
 cargo build --release
+node --check web/app.js
 powershell -ExecutionPolicy Bypass -File scripts/kairos-smoke.ps1 -BaseUrl http://localhost:8080
 ```
 
-Read more:
+The smoke script expects a running server. For deterministic smoke testing:
 
-- `docs/ARCHITECTURE.md` explains the Rust crates, temporal model, Allen-13 relation layer, and learning path.
-- `docs/CAPABILITY_MAP.md` tracks what is live now and what turns KAIROS into a TACITUS backbone.
-- `docs/ROADMAP_MVP_PLUS.md` converts the deep research brief into an implementation backlog.
-- `docs/DEEP_TECH_MVP_BUILD_PLAN.md` turns the latest research into the next engineering plan: friction objects, source spans, DCT-relative time, contradiction checks, large-text chunking, and graph export.
-- `docs/research/KAIROS_Temporal_Vision_Engine_Development.md` preserves the imported Gemini deep-research report.
-- `examples/demo-text.md` contains the Meridian Compact Crisis.
+```bash
+KAIROS_LLM=mock cargo run --release --bin kairos-server
+```
+
+## Deployment
+
+Cloud Run deployment:
+
+```bash
+PROJECT_ID="kairos-temporal-tacitus" KAIROS_LLM=mock ./deploy.sh
+```
+
+Gemini-backed deployment:
+
+```bash
+PROJECT_ID="kairos-temporal-tacitus" KAIROS_LLM=gemini GEMINI_API_KEY="..." ./deploy.sh
+```
+
+The deploy script enables required Google Cloud APIs, builds the container with Cloud Build, pushes to Artifact Registry, deploys the Cloud Run service, and configures public access where org policy permits it.
+
+## Security And Privacy
+
+- The browser Gemini key field is request-scoped.
+- Keys are not persisted by the frontend.
+- Request-scoped keys are not serialized in `AnalysisResult`.
+- The deterministic demo can run with no LLM provider or external key.
+- Real case text sent to `/api/analyze` is processed by the configured provider. Do not send sensitive material to a hosted LLM unless you are authorized to do so.
+
+See [SECURITY.md](SECURITY.md) for vulnerability reporting and operational guidance.
+
+## Contributing
+
+KAIROS is early-stage TACITUS infrastructure. Contributions should preserve the central contract: simple user-facing API, serious Rust core, source-grounded outputs, and honest capability claims.
+
+Start with:
+
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- [docs/CAPABILITY_MAP.md](docs/CAPABILITY_MAP.md)
+- [docs/DEEP_TECH_MVP_BUILD_PLAN.md](docs/DEEP_TECH_MVP_BUILD_PLAN.md)
 
 ## License
 

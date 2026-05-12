@@ -1,6 +1,9 @@
 use crate::aco::{ExtractedActor, ExtractedCommitment, TemporalEvent};
 use crate::episode::Episode;
-use crate::friction::{Friction, FrictionKind, FrictionTrajectory};
+use crate::friction::{
+    EvidenceGrade, Friction, FrictionDirectness, FrictionKind, FrictionMechanism, FrictionPolarity,
+    FrictionTrajectory,
+};
 use crate::llm::LlmClient;
 use crate::source::SourceSpan;
 use crate::temporal::TemporalInterval;
@@ -49,6 +52,15 @@ pub async fn extract_frictions(
                         "evidence_spans": {"type": "ARRAY", "items": {"type": "OBJECT"}},
                         "intensity": {"type": "NUMBER"},
                         "confidence": {"type": "NUMBER"},
+                        "polarity": {"type": "STRING"},
+                        "mechanism": {"type": "STRING"},
+                        "latent": {"type": "BOOLEAN"},
+                        "directness": {"type": "STRING"},
+                        "prior_state": {"type": "STRING"},
+                        "new_state": {"type": "STRING"},
+                        "counterparty_effect": {"type": "STRING"},
+                        "evidence_grade": {"type": "STRING"},
+                        "competing_hypotheses": {"type": "ARRAY", "items": {"type": "STRING"}},
                         "commitment_ids": {"type": "ARRAY", "items": {"type": "STRING"}},
                         "episode_ids": {"type": "ARRAY", "items": {"type": "STRING"}},
                         "trajectory": {"type": "STRING"}
@@ -180,6 +192,71 @@ fn mock_frictions(
             episode_ids("okoye"),
             FrictionTrajectory::Mutating,
         ),
+        mock_friction(
+            FrictionKind::LegalBlockage,
+            "The court block creates a legal blockage between sanctions enforcement and compensation sequencing.",
+            vec!["actor_okoye", "actor_haddad", "actor_brokers"],
+            event_id(6),
+            "2024-04-26T00:00:00Z",
+            "2024-05-10T00:00:00Z",
+            find_span("A court blocks part of Okoye's license suspension order"),
+            0.76,
+            vec![],
+            episode_ids("sanctions"),
+            FrictionTrajectory::Mutating,
+        ),
+        mock_friction(
+            FrictionKind::PolicyDivergence,
+            "Ibarra's terminal-opening position diverges from Vale's insistence on upstream compensation before implementation.",
+            vec!["actor_ibarra", "actor_vale"],
+            event_id(3),
+            "2024-02-19T00:00:00Z",
+            "2024-05-10T00:00:00Z",
+            find_span("meaningless unless upstream farmers receive cash before planting season"),
+            0.69,
+            commitment_id("terminals"),
+            episode_ids("negotiation"),
+            FrictionTrajectory::Freezing,
+        ),
+        mock_friction(
+            FrictionKind::Escalation,
+            "Strike expansion threats convert worker compensation uncertainty into direct escalation pressure.",
+            vec!["actor_soren", "actor_okoye"],
+            event_id(4),
+            "2024-03-14T00:00:00Z",
+            "2024-04-02T00:00:00Z",
+            find_span("will expand the strike if refinery crews are treated as collateral damage"),
+            0.82,
+            vec![],
+            episode_ids("strike"),
+            FrictionTrajectory::Escalating,
+        ),
+        mock_friction(
+            FrictionKind::ProceduralObstruction,
+            "Ibarra refuses to attend the backchannel, slowing actor-level convergence while preserving deniability through observers.",
+            vec!["actor_ibarra", "actor_haddad"],
+            event_id(5),
+            "2024-04-02T00:00:00Z",
+            "2024-04-26T00:00:00Z",
+            find_span("Ibarra refuses to attend but sends technical staff to observe"),
+            0.71,
+            vec![],
+            episode_ids("negotiation"),
+            FrictionTrajectory::Freezing,
+        ),
+        mock_friction(
+            FrictionKind::TrustLoss,
+            "The winter review confirms that the compact prevented shutdown but failed to produce durable trust.",
+            vec!["actor_reed", "actor_vale", "actor_soren", "actor_haddad"],
+            event_id(15),
+            "2025-01-06T00:00:00Z",
+            "2025-02-14T00:00:00Z",
+            find_span("failed to produce durable trust"),
+            0.8,
+            commitment_id("public implementation ledger"),
+            episode_ids("reed"),
+            FrictionTrajectory::Mutating,
+        ),
     ]
     .into_iter()
     .filter_map(Friction::normalize)
@@ -200,6 +277,22 @@ fn mock_friction(
     episode_ids: Vec<String>,
     trajectory: FrictionTrajectory,
 ) -> Friction {
+    let polarity = polarity_for(&kind);
+    let mechanism = mechanism_for(&kind);
+    let latent = matches!(
+        kind,
+        FrictionKind::InstitutionalDrift | FrictionKind::ImplementationGap
+    );
+    let directness = if evidence_spans.is_empty() {
+        FrictionDirectness::Inferred
+    } else {
+        FrictionDirectness::Explicit
+    };
+    let evidence_grade = if evidence_spans.is_empty() {
+        EvidenceGrade::TemporalInference
+    } else {
+        EvidenceGrade::DirectQuote
+    };
     Friction {
         id: Friction::new_id(),
         kind,
@@ -214,10 +307,49 @@ fn mock_friction(
         evidence_spans,
         intensity,
         confidence: 0.9,
+        polarity,
+        mechanism,
+        latent,
+        directness,
+        prior_state: Some("prior commitment or expected performance path".to_string()),
+        new_state: Some("observed friction changes the operating path".to_string()),
+        counterparty_effect: Some(
+            "counterparties face higher bargaining risk and lower confidence".to_string(),
+        ),
+        evidence_grade,
+        competing_hypotheses: vec![
+            "administrative capacity problem".to_string(),
+            "strategic political delay".to_string(),
+        ],
         commitment_ids,
         episode_ids,
         trajectory,
         attrs: Default::default(),
+    }
+}
+
+fn polarity_for(kind: &FrictionKind) -> FrictionPolarity {
+    match kind {
+        FrictionKind::ImplementationGap | FrictionKind::InstitutionalDrift => {
+            FrictionPolarity::Ambiguity
+        }
+        FrictionKind::LeadershipTransition => FrictionPolarity::Asymmetry,
+        _ => FrictionPolarity::Conflict,
+    }
+}
+
+fn mechanism_for(kind: &FrictionKind) -> FrictionMechanism {
+    match kind {
+        FrictionKind::CommitmentFailure => FrictionMechanism::Noncompliance,
+        FrictionKind::ProceduralObstruction => FrictionMechanism::ProceduralBlock,
+        FrictionKind::InstitutionalDrift => FrictionMechanism::ImplementationGap,
+        FrictionKind::TrustLoss => FrictionMechanism::TrustLoss,
+        FrictionKind::PolicyDivergence => FrictionMechanism::NarrativeSplit,
+        FrictionKind::LeadershipTransition => FrictionMechanism::LeadershipShift,
+        FrictionKind::LegalBlockage => FrictionMechanism::LegalBlockage,
+        FrictionKind::ImplementationGap => FrictionMechanism::Delay,
+        FrictionKind::Escalation => FrictionMechanism::NarrativeSplit,
+        FrictionKind::Custom => FrictionMechanism::Unknown,
     }
 }
 

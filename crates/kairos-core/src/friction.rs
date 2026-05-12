@@ -40,6 +40,72 @@ impl Default for FrictionTrajectory {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum FrictionPolarity {
+    Conflict,
+    Cooperation,
+    Ambiguity,
+    Dependency,
+    Asymmetry,
+}
+
+impl Default for FrictionPolarity {
+    fn default() -> Self {
+        Self::Conflict
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum FrictionMechanism {
+    Delay,
+    Noncompliance,
+    LegalBlockage,
+    ResourceScarcity,
+    LeadershipShift,
+    NarrativeSplit,
+    ProceduralBlock,
+    TrustLoss,
+    ImplementationGap,
+    Unknown,
+}
+
+impl Default for FrictionMechanism {
+    fn default() -> Self {
+        Self::Unknown
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum FrictionDirectness {
+    Explicit,
+    Implied,
+    Inferred,
+}
+
+impl Default for FrictionDirectness {
+    fn default() -> Self {
+        Self::Explicit
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum EvidenceGrade {
+    DirectQuote,
+    Paraphrase,
+    TemporalInference,
+    CrossEventInference,
+}
+
+impl Default for EvidenceGrade {
+    fn default() -> Self {
+        Self::Paraphrase
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Friction {
     pub id: String,
@@ -54,6 +120,24 @@ pub struct Friction {
     pub evidence_spans: Vec<SourceSpan>,
     pub intensity: f32,
     pub confidence: f32,
+    #[serde(default)]
+    pub polarity: FrictionPolarity,
+    #[serde(default)]
+    pub mechanism: FrictionMechanism,
+    #[serde(default)]
+    pub latent: bool,
+    #[serde(default)]
+    pub directness: FrictionDirectness,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prior_state: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub new_state: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub counterparty_effect: Option<String>,
+    #[serde(default)]
+    pub evidence_grade: EvidenceGrade,
+    #[serde(default)]
+    pub competing_hypotheses: Vec<String>,
     #[serde(default)]
     pub commitment_ids: Vec<String>,
     #[serde(default)]
@@ -78,6 +162,8 @@ impl Friction {
             .retain(|actor| !actor.trim().is_empty());
         self.commitment_ids.retain(|id| !id.trim().is_empty());
         self.episode_ids.retain(|id| !id.trim().is_empty());
+        self.competing_hypotheses
+            .retain(|hypothesis| !hypothesis.trim().is_empty());
         Some(self)
     }
 }

@@ -114,6 +114,13 @@ fn mock_aco() -> AcoExtraction {
                 "Northbridge mediation envoy",
             ),
             actor("actor_reed", "Tomas Reed", "deputy water minister"),
+            actor("actor_liao", "Dr. Mei Liao", "verification cell director"),
+            actor("actor_court", "Administrative Court", "legal authority"),
+            actor(
+                "actor_silva",
+                "Jonas Silva",
+                "interim basin authority chair",
+            ),
             actor(
                 "actor_brokers",
                 "Water broker firms",
@@ -162,6 +169,34 @@ fn mock_aco() -> AcoExtraction {
                 "Meridian Authority Bill",
                 "future emergency governance",
                 "proposed",
+            ),
+            commitment(
+                "com_cure_period",
+                "Complete a two-week cure period after the missed farmer-payment deadline",
+                "Amara Okoye",
+                "upstream farmers",
+                "announced",
+            ),
+            commitment(
+                "com_court_review",
+                "Resolve the license-suspension injunction before sanctions expansion",
+                "Administrative Court",
+                "Meridian cabinet",
+                "ordered",
+            ),
+            commitment(
+                "com_verification_cell",
+                "Reconcile satellite evidence, payment records, and port throughput",
+                "Verification cell",
+                "compact parties",
+                "authorized",
+            ),
+            commitment(
+                "com_successor_framework",
+                "Publish the successor framework before the February decision window",
+                "Tomas Reed",
+                "Meridian basin stakeholders",
+                "announced",
             ),
         ],
     }

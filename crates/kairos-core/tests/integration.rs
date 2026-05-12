@@ -1,4 +1,6 @@
-use kairos_core::{validate_graph, AllenRelation, AnalysisRequest, Kairos, ValidationRequest};
+use kairos_core::{
+    validate_graph, AllenRelation, AnalysisMode, AnalysisRequest, Kairos, ValidationRequest,
+};
 
 #[tokio::test]
 async fn mock_pipeline_returns_temporal_structure() {
@@ -10,13 +12,14 @@ async fn mock_pipeline_returns_temporal_structure() {
             gemini_model: None,
             document_id: Some("meridian-demo".to_string()),
             document_created_at: None,
+            analysis_mode: AnalysisMode::Auto,
         })
         .await
         .expect("mock analysis");
 
     assert!(result.dates.len() >= 15, "expected many date mentions");
-    assert!(result.events.len() >= 15, "expected temporal events");
-    assert!(result.episodes.len() >= 8, "expected episode bands");
+    assert!(result.events.len() >= 25, "expected temporal events");
+    assert!(result.episodes.len() >= 10, "expected episode bands");
     assert!(
         result
             .relations
@@ -24,9 +27,29 @@ async fn mock_pipeline_returns_temporal_structure() {
             .any(|r| !matches!(r.relation, AllenRelation::Before | AllenRelation::After)),
         "expected at least one non-trivial Allen relation"
     );
-    assert!(result.actors.len() >= 7, "expected ACO actors");
-    assert!(result.commitments.len() >= 6, "expected ACO commitments");
-    assert!(result.frictions.len() >= 5, "expected friction objects");
+    assert!(result.actors.len() >= 10, "expected ACO actors");
+    assert!(result.commitments.len() >= 10, "expected ACO commitments");
+    assert!(result.frictions.len() >= 10, "expected friction objects");
+    assert!(
+        result.hypotheses.len() >= 3,
+        "expected cautious friction hypotheses"
+    );
+    assert!(
+        result.graph_summary.node_count > 0 && result.graph_summary.edge_count > 0,
+        "expected graph export summary"
+    );
+    assert!(
+        result.pre_read.chronology_block_count >= 20,
+        "expected chronology pre-read segmentation"
+    );
+    assert!(
+        !result.actor_registry.alias_to_actor_id.is_empty(),
+        "expected actor alias registry"
+    );
+    assert!(
+        result.diagnostics.warnings.len() >= 2,
+        "expected contradictions or warnings"
+    );
     assert!(
         result.diagnostics.high_intensity_friction_count >= 3,
         "expected high-intensity friction signal"
@@ -58,6 +81,7 @@ async fn validate_graph_returns_diagnostics_without_analysis() {
             gemini_model: None,
             document_id: None,
             document_created_at: None,
+            analysis_mode: AnalysisMode::Auto,
         })
         .await
         .expect("mock analysis");
@@ -87,6 +111,7 @@ async fn dct_resolves_relative_dates() {
                     .unwrap()
                     .with_timezone(&chrono::Utc),
             ),
+            analysis_mode: AnalysisMode::Single,
         })
         .await
         .expect("mock analysis");
@@ -112,5 +137,38 @@ async fn dct_resolves_relative_dates() {
                     .map(|dt| dt.to_rfc3339().starts_with("2024-04-01"))
                     .unwrap_or(false)),
         "expected next quarter resolution"
+    );
+}
+
+#[tokio::test]
+async fn source_spans_and_graph_preserve_object_links() {
+    let text = include_str!("../../../examples/demo-text.md");
+    let result = Kairos::mock()
+        .analyze(AnalysisRequest {
+            text: text.to_string(),
+            gemini_api_key: None,
+            gemini_model: None,
+            document_id: Some("source-index-fixture".to_string()),
+            document_created_at: None,
+            analysis_mode: AnalysisMode::Dossier,
+        })
+        .await
+        .expect("mock analysis");
+
+    assert!(
+        result
+            .source_index
+            .spans_by_object
+            .keys()
+            .any(|id| id.starts_with("evt_") || id.starts_with("fr_")),
+        "expected source index to link events or frictions"
+    );
+    assert!(
+        result
+            .graph
+            .edges
+            .iter()
+            .any(|edge| edge.edge_type == "inferred_from"),
+        "expected hypotheses to cite graph evidence"
     );
 }

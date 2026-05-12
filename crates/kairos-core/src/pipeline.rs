@@ -1,4 +1,5 @@
 use crate::aco::{ExtractedActor, ExtractedCommitment, TemporalEvent};
+use crate::actors::canonical::{build_actor_registry, ActorRegistry};
 use crate::detect::reconcile::reconcile;
 use crate::detect::trait_::EpisodeDetector;
 use crate::detect::LlmJudgeDetector;
@@ -9,8 +10,12 @@ use crate::extract::events::extract_events;
 use crate::extract::friction_extract::extract_frictions;
 use crate::extract::{DateExtractor, DateMention};
 use crate::friction::Friction;
+use crate::graph::{build_graph, GraphExport, GraphInput, GraphSummary};
+use crate::hypothesis::{infer_hypotheses, FrictionHypothesis};
 use crate::llm::LlmClient;
+use crate::pre_read::{pre_read, PreReadReport};
 use crate::relations::{compute, EpisodeRelation};
+use crate::source::index::SourceIndex;
 use crate::store::KairosStore;
 use crate::{KairosError, Result};
 use chrono::{DateTime, Utc};
@@ -29,6 +34,18 @@ pub struct AnalysisRequest {
     pub document_id: Option<String>,
     #[serde(default)]
     pub document_created_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub analysis_mode: AnalysisMode,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum AnalysisMode {
+    #[default]
+    Auto,
+    Single,
+    Dossier,
+    Corpus,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -43,6 +60,12 @@ pub struct AnalysisResult {
     pub frictions: Vec<Friction>,
     pub episodes: Vec<Episode>,
     pub relations: Vec<EpisodeRelation>,
+    pub pre_read: PreReadReport,
+    pub actor_registry: ActorRegistry,
+    pub source_index: SourceIndex,
+    pub hypotheses: Vec<FrictionHypothesis>,
+    pub graph_summary: GraphSummary,
+    pub graph: GraphExport,
 }
 
 pub struct AnalysisContext<'a> {
@@ -110,10 +133,12 @@ impl Kairos {
             request.document_id.as_deref(),
             request.document_created_at,
         );
+        let pre_read = pre_read(text, &dates, request.document_created_at);
         let (events, aco) =
             tokio::join!(extract_events(&llm, text, &dates), extract_aco(&llm, text));
         let events = events?;
         let aco = aco?;
+        let actor_registry = build_actor_registry(text, &aco.actors);
 
         let ctx = AnalysisContext {
             text,
@@ -135,6 +160,30 @@ impl Kairos {
             &episodes,
         )
         .await?;
+        let hypotheses = infer_hypotheses(&frictions);
+        let source_index = SourceIndex::build(
+            request.document_id.clone(),
+            &pre_read.segments,
+            &events,
+            &aco.commitments,
+            &frictions,
+        );
+        let document_id = request
+            .document_id
+            .clone()
+            .unwrap_or_else(|| "document".to_string());
+        let graph = build_graph(GraphInput {
+            document_id: &document_id,
+            dates: &dates,
+            events: &events,
+            actor_registry: &actor_registry,
+            commitments: &aco.commitments,
+            frictions: &frictions,
+            episodes: &episodes,
+            relations: &relations,
+            hypotheses: &hypotheses,
+        });
+        let graph_summary = graph.summary.clone();
         let diagnostics = analyze_temporal_diagnostics(
             &dates,
             &aco.commitments,
@@ -170,6 +219,12 @@ impl Kairos {
             frictions,
             episodes,
             relations,
+            pre_read,
+            actor_registry,
+            source_index,
+            hypotheses,
+            graph_summary,
+            graph,
         })
     }
 }

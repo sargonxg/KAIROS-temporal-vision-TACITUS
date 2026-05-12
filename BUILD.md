@@ -21,12 +21,15 @@ Open `http://localhost:8080`, load the demo text, and analyze. Mock mode returns
 
 Expected mock output:
 
-- at least 15 dates;
-- at least 15 events;
-- at least 7 actors;
-- at least 6 commitments;
-- at least 8 episodes;
-- multiple non-trivial Allen-13 relations.
+- at least 30 dates;
+- at least 25 events;
+- at least 10 actors;
+- at least 10 commitments;
+- at least 10 friction objects;
+- at least 3 hypotheses;
+- at least 10 episodes;
+- at least 80 Allen-13 relations;
+- multiple diagnostics warnings for contradictions or dense friction.
 
 ## Gemini Demo
 

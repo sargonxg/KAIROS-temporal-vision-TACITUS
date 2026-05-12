@@ -1,5 +1,7 @@
 use crate::{KairosError, Result};
+use async_trait::async_trait;
 use reqwest::Client;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::env;
 
@@ -16,6 +18,50 @@ pub struct LlmClient {
     http: Client,
     gemini_api_key: Option<String>,
     gemini_model: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ExtractionTask {
+    pub name: String,
+    pub instructions: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct JsonSchema {
+    pub value: Value,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ExtractionInput {
+    pub text: String,
+    #[serde(default)]
+    pub context: Value,
+}
+
+#[async_trait]
+pub trait StructuredExtractor: Send + Sync {
+    async fn extract_json(
+        &self,
+        task: ExtractionTask,
+        schema: JsonSchema,
+        input: ExtractionInput,
+    ) -> Result<Value>;
+}
+
+#[async_trait]
+impl StructuredExtractor for LlmClient {
+    async fn extract_json(
+        &self,
+        task: ExtractionTask,
+        schema: JsonSchema,
+        input: ExtractionInput,
+    ) -> Result<Value> {
+        let prompt = format!(
+            "{}\n\nTASK:{}\nCONTEXT:{}\nTEXT:\n{}",
+            task.instructions, task.name, input.context, input.text
+        );
+        self.complete_json_with_schema(&prompt, schema.value).await
+    }
 }
 
 impl LlmClient {

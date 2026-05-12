@@ -29,6 +29,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/healthz", get(|| async { "ok" }))
         .route("/api/analyze", post(analyze))
         .route("/api/v1/analyze", post(analyze))
+        .route("/api/v1/graph", post(graph))
         .route("/api/v1/validate", post(validate))
         .fallback(static_handler)
         .layer(CorsLayer::permissive())
@@ -55,6 +56,23 @@ async fn analyze(
         Ok(result) => (StatusCode::OK, Json(result)).into_response(),
         Err(err) => {
             tracing::warn!(error = %err, "analysis failed");
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({"error": err.to_string()})),
+            )
+                .into_response()
+        }
+    }
+}
+
+async fn graph(
+    State(kairos): State<Kairos>,
+    Json(req): Json<AnalysisRequest>,
+) -> impl IntoResponse {
+    match kairos.analyze(req).await {
+        Ok(result) => (StatusCode::OK, Json(result.graph)).into_response(),
+        Err(err) => {
+            tracing::warn!(error = %err, "graph export failed");
             (
                 StatusCode::BAD_REQUEST,
                 Json(serde_json::json!({"error": err.to_string()})),
