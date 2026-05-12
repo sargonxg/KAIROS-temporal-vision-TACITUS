@@ -3,130 +3,180 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>KAIROS Temporal Vision</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2309090b'/%3E%3Cpath d='M14 12h8v18l18-18h10L29 33l22 19H39L22 37v15h-8z' fill='%2334d399'/%3E%3C/svg%3E" />
+    <title>KAIROS Conflict Vision</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23090b10'/%3E%3Cpath d='M14 12h8v18l18-18h10L29 33l22 19H39L22 37v15h-8z' fill='%2322c55e'/%3E%3C/svg%3E" />
     <link rel="stylesheet" href="https://unpkg.com/vis-timeline@7.7.3/styles/vis-timeline-graph2d.min.css" />
     <link rel="stylesheet" href="/style.css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vis-timeline@7.7.3/standalone/umd/vis-timeline-graph2d.min.js"></script>
   </head>
   <body>
-    <main class="min-h-screen bg-zinc-950 text-zinc-100">
-      <section class="border-b border-emerald-400/30 bg-[radial-gradient(circle_at_20%_0%,rgba(16,185,129,.22),transparent_30%),linear-gradient(135deg,#09090b,#111827_48%,#0f172a)]">
-        <div class="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-[1.05fr_.95fr]">
-          <div>
-            <div class="mb-5 flex items-center gap-3">
-              <div class="grid h-11 w-11 place-items-center border border-emerald-300 bg-emerald-300 text-xl font-black text-zinc-950">K</div>
-              <div>
-                <p class="text-xs uppercase tracking-[.28em] text-emerald-300">TACITUS temporal intelligence</p>
-                <h1 class="text-4xl font-black leading-tight sm:text-6xl">KAIROS</h1>
-              </div>
-            </div>
-            <p class="max-w-2xl text-lg text-zinc-300">
-              Turn political and institutional prose into dated events, actor commitments, coherent episodes, and Allen-13 temporal relations.
-            </p>
-            <div class="mt-6 flex flex-wrap gap-3 text-xs uppercase tracking-[.18em] text-zinc-400">
-              <span class="border border-zinc-700 px-3 py-2">Episodes</span>
-              <span class="border border-zinc-700 px-3 py-2">Bitemporal facts</span>
-              <span class="border border-zinc-700 px-3 py-2">Conflict ontology</span>
-              <span class="border border-zinc-700 px-3 py-2">Cloud Run ready</span>
+    <main class="min-h-screen">
+      <header class="app-header">
+        <div class="mx-auto grid max-w-[1540px] gap-5 px-5 py-5 xl:grid-cols-[1fr_auto]">
+          <div class="flex min-w-0 items-center gap-4">
+            <div class="brand-mark">K</div>
+            <div class="min-w-0">
+              <p class="eyebrow">TACITUS conflict vision engine</p>
+              <h1>KAIROS</h1>
+              <p class="header-copy">Temporal knowledge graphs for policy, diplomacy, legal blockage, commitments, and human friction.</p>
             </div>
           </div>
-          <div class="border border-emerald-300/40 bg-black/50 p-4 shadow-2xl shadow-emerald-950/40">
-            <div class="grid grid-cols-3 gap-2 font-mono text-xs text-emerald-200">
-              <div class="border border-zinc-800 p-3"><span class="block text-2xl text-white" id="metric-dates">0</span>dates</div>
-              <div class="border border-zinc-800 p-3"><span class="block text-2xl text-white" id="metric-episodes">0</span>episodes</div>
-              <div class="border border-zinc-800 p-3"><span class="block text-2xl text-white" id="metric-relations">0</span>relations</div>
-            </div>
-            <pre class="mt-4 h-48 overflow-hidden whitespace-pre-wrap text-xs leading-relaxed text-zinc-400" id="signal-panel">awaiting temporal signal...</pre>
+          <div class="status-strip">
+            <div><span id="metric-dates">0</span><small>dates</small></div>
+            <div><span id="metric-events">0</span><small>events</small></div>
+            <div><span id="metric-actors">0</span><small>actors</small></div>
+            <div><span id="metric-frictions">0</span><small>frictions</small></div>
+            <div><span id="metric-relations">0</span><small>relations</small></div>
+            <div><span id="metric-graph">0</span><small>graph edges</small></div>
           </div>
         </div>
-      </section>
+      </header>
 
-      <section class="mx-auto max-w-7xl px-5 py-6">
-        <div class="grid gap-4 lg:grid-cols-[.85fr_1.15fr]">
-          <div>
-            <div class="mb-3 flex flex-wrap items-center gap-2">
-              <button id="btn-demo" class="border border-emerald-300 bg-emerald-300 px-4 py-2 text-sm font-bold text-zinc-950 hover:bg-emerald-200">Load demo text</button>
-              <button id="btn-analyze" class="border border-zinc-600 px-4 py-2 text-sm font-bold text-zinc-100 hover:border-emerald-300">Analyze</button>
-              <button id="btn-download" class="hidden border border-zinc-600 px-4 py-2 text-sm font-bold text-zinc-100 hover:border-emerald-300">Download JSON</button>
+      <section class="mx-auto grid max-w-[1540px] gap-5 px-5 py-5 xl:grid-cols-[420px_1fr]">
+        <aside class="control-rail">
+          <div class="rail-section">
+            <div class="section-head">
+              <span>Case Input</span>
+              <small id="case-count">0 chars</small>
             </div>
-            <div class="mb-3 border border-zinc-800 bg-zinc-900 p-3">
-              <label class="mb-2 block text-xs font-bold uppercase tracking-[.18em] text-emerald-300" for="gemini-key">Gemini API key for this run</label>
-              <div class="flex gap-2">
-                <input id="gemini-key" class="min-w-0 flex-1 border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none focus:border-emerald-300" type="password" autocomplete="off" spellcheck="false" placeholder="Optional. Used once, not saved." />
-                <button id="btn-clear-key" class="border border-zinc-700 px-3 py-2 text-sm font-bold text-zinc-300 hover:border-emerald-300" type="button">Clear</button>
-              </div>
-              <p class="mt-2 text-xs leading-relaxed text-zinc-500">Leave empty for the server default. Add a key to test real Gemini extraction from this browser session only.</p>
-              <label class="mb-2 mt-3 block text-xs font-bold uppercase tracking-[.18em] text-zinc-500" for="gemini-model">Model</label>
-              <input id="gemini-model" class="w-full border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none focus:border-emerald-300" autocomplete="off" spellcheck="false" value="gemini-2.5-flash" />
+            <div class="case-actions">
+              <button id="btn-demo" class="primary-action" type="button">Meridian dossier</button>
+              <button id="btn-alt-demo" class="secondary-action" type="button">Aurelian chain</button>
             </div>
-            <textarea id="text-input" class="h-[34rem] w-full resize-y border border-zinc-700 bg-zinc-900 p-4 font-mono text-sm leading-relaxed text-zinc-100 outline-none focus:border-emerald-300" placeholder="Paste a policy memo, crisis chronology, negotiation brief, or diplomatic narrative..."></textarea>
-            <p id="status" class="mt-2 min-h-6 text-sm text-zinc-400">Ready.</p>
+            <textarea id="text-input" spellcheck="false" placeholder="Paste a real case, diplomatic cable, legal chronology, crisis memo, transcript, or policy dossier..."></textarea>
+            <div class="run-row">
+              <button id="btn-analyze" class="analyze-action" type="button">Analyze</button>
+              <button id="btn-download" class="download-action hidden" type="button">Export JSON</button>
+            </div>
+            <p id="status">Ready.</p>
           </div>
 
-          <div id="results" class="space-y-4">
-            <section class="border border-zinc-800 bg-zinc-900 p-4">
-              <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <h2 class="text-sm font-bold uppercase tracking-[.18em] text-emerald-300">Timeline</h2>
-                <div id="mode-panel" class="font-mono text-xs text-zinc-500">awaiting run metadata</div>
+          <div class="rail-section">
+            <div class="section-head">
+              <span>Provider</span>
+              <small>request scoped</small>
+            </div>
+            <label for="gemini-key">Gemini API key</label>
+            <div class="key-row">
+              <input id="gemini-key" type="password" autocomplete="off" spellcheck="false" placeholder="Optional. Used once." />
+              <button id="btn-clear-key" type="button">Clear</button>
+            </div>
+            <label for="gemini-model">Model</label>
+            <input id="gemini-model" autocomplete="off" spellcheck="false" value="gemini-2.5-flash" />
+            <p class="muted-note">Leave empty for the deployed default. Add a key to test a real pasted case through Gemini without storing the key.</p>
+          </div>
+
+          <div class="rail-section">
+            <div class="section-head">
+              <span>Run Signal</span>
+              <small id="mode-panel">awaiting metadata</small>
+            </div>
+            <pre id="signal-panel">awaiting temporal signal...</pre>
+          </div>
+        </aside>
+
+        <section id="results" class="workspace">
+          <section class="panel timeline-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Temporal scene</p>
+                <h2>Episode Timeline</h2>
               </div>
-              <div id="timeline" class="min-h-72 bg-zinc-950 text-zinc-900"></div>
-            </section>
-            <section class="grid gap-4 xl:grid-cols-[.9fr_1.1fr]">
-              <div class="border border-zinc-800 bg-zinc-900 p-4">
-                <h2 class="mb-3 text-sm font-bold uppercase tracking-[.18em] text-emerald-300">Temporal diagnostics</h2>
-                <div id="diagnostics-panel" class="grid gap-2 text-sm text-zinc-200"></div>
+              <div class="legend">
+                <span><i class="swatch crisis"></i>crisis</span>
+                <span><i class="swatch agreement"></i>agreement</span>
+                <span><i class="swatch sanction"></i>sanction</span>
+                <span><i class="swatch leadership"></i>leadership</span>
               </div>
-              <div class="border border-zinc-800 bg-zinc-900 p-4">
-                <h2 class="mb-3 text-sm font-bold uppercase tracking-[.18em] text-emerald-300">Temporal brief</h2>
-                <div id="brief-panel" class="space-y-2 text-sm leading-relaxed text-zinc-200"></div>
+            </div>
+            <div id="timeline"></div>
+          </section>
+
+          <section class="metric-grid">
+            <div class="panel">
+              <div class="panel-head compact"><h2>Diagnostics</h2></div>
+              <div id="diagnostics-panel" class="diag-grid"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head compact"><h2>Temporal Brief</h2></div>
+              <div id="brief-panel" class="brief"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head compact"><h2>Pre-Read</h2></div>
+              <div id="pre-read-panel" class="pre-read"></div>
+            </div>
+          </section>
+
+          <section class="split-grid">
+            <div class="panel">
+              <div class="panel-head compact">
+                <h2>Friction System</h2>
+                <small id="friction-summary">awaiting run</small>
               </div>
-            </section>
-            <section class="border border-zinc-800 bg-zinc-900 p-4">
-              <h2 class="mb-3 text-sm font-bold uppercase tracking-[.18em] text-emerald-300">Actor lanes</h2>
-              <div id="actor-lanes" class="space-y-3"></div>
-            </section>
-            <section class="border border-zinc-800 bg-zinc-900 p-4">
-              <h2 class="mb-3 text-sm font-bold uppercase tracking-[.18em] text-emerald-300">Friction map</h2>
-              <div id="friction-map" class="space-y-3"></div>
-            </section>
-            <section class="grid gap-4 xl:grid-cols-2">
-              <div class="border border-zinc-800 bg-zinc-900 p-4">
-                <h2 class="mb-3 text-sm font-bold uppercase tracking-[.18em] text-emerald-300">Annotated text</h2>
-                <div id="annotated" class="max-h-80 overflow-auto whitespace-pre-wrap text-sm leading-relaxed text-zinc-200"></div>
+              <div id="friction-map" class="friction-grid"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head compact">
+                <h2>Graph View</h2>
+                <small id="graph-summary">awaiting graph</small>
               </div>
-              <div class="border border-zinc-800 bg-zinc-900 p-4">
-                <h2 class="mb-3 text-sm font-bold uppercase tracking-[.18em] text-emerald-300">ACO extraction</h2>
-                <div id="aco-section" class="text-sm text-zinc-200"></div>
+              <div id="graph-view" class="graph-view"></div>
+            </div>
+          </section>
+
+          <section class="split-grid">
+            <div class="panel">
+              <div class="panel-head compact"><h2>Hypotheses</h2></div>
+              <div id="hypothesis-panel" class="hypothesis-list"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head compact"><h2>Actor Lanes</h2></div>
+              <div id="actor-lanes" class="actor-lanes"></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head compact">
+              <h2>Allen-13 Relations</h2>
+              <div class="filter-row" id="relation-filters">
+                <button class="relation-filter active" data-filter="interesting" type="button">signal</button>
+                <button class="relation-filter" data-filter="overlap" type="button">overlap</button>
+                <button class="relation-filter" data-filter="boundary" type="button">boundary</button>
+                <button class="relation-filter" data-filter="all" type="button">all</button>
               </div>
-            </section>
-            <section class="border border-zinc-800 bg-zinc-900 p-4">
-              <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <h2 class="text-sm font-bold uppercase tracking-[.18em] text-emerald-300">Allen-13 relations</h2>
-                <div class="flex flex-wrap gap-2 text-xs" id="relation-filters">
-                  <button class="relation-filter active" data-filter="interesting">signal</button>
-                  <button class="relation-filter" data-filter="overlap">overlap</button>
-                  <button class="relation-filter" data-filter="boundary">boundary</button>
-                  <button class="relation-filter" data-filter="all">all</button>
-                </div>
-              </div>
-              <div class="max-h-64 overflow-auto">
-                <table class="w-full text-left text-sm">
-                  <tbody id="relations-tbody" class="divide-y divide-zinc-800"></tbody>
+            </div>
+            <div class="relations-shell">
+              <div id="relation-matrix" class="relation-matrix"></div>
+              <div class="relations-table">
+                <table>
+                  <tbody id="relations-tbody"></tbody>
                 </table>
               </div>
-            </section>
-            <section class="border border-zinc-800 bg-zinc-900 p-4">
-              <h2 class="mb-3 text-sm font-bold uppercase tracking-[.18em] text-emerald-300">Analyst corrections</h2>
-              <div id="corrections-panel" class="grid gap-2 text-sm text-zinc-200"></div>
-            </section>
-            <details class="border border-zinc-800 bg-zinc-900 p-4">
-              <summary class="cursor-pointer text-sm font-bold uppercase tracking-[.18em] text-emerald-300">Raw JSON</summary>
-              <pre id="raw-json" class="mt-3 max-h-96 overflow-auto text-xs text-zinc-300"></pre>
-            </details>
-          </div>
-        </div>
+            </div>
+          </section>
+
+          <section class="split-grid">
+            <div class="panel">
+              <div class="panel-head compact"><h2>Annotated Source</h2></div>
+              <div id="annotated" class="annotated"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head compact"><h2>Actors & Commitments</h2></div>
+              <div id="aco-section" class="aco-section"></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head compact"><h2>Analyst Corrections</h2></div>
+            <div id="corrections-panel" class="corrections-panel"></div>
+          </section>
+
+          <details class="panel raw-panel">
+            <summary>Raw JSON</summary>
+            <pre id="raw-json"></pre>
+          </details>
+        </section>
       </section>
     </main>
     <script src="/app.js"></script>
