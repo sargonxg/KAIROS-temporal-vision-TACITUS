@@ -1246,13 +1246,16 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum 0.7.9",
+ "base64 0.22.1",
  "kairos-core",
  "mime_guess",
  "rust-embed",
  "serde",
  "serde_json",
  "tokio",
+ "tower",
  "tower-http",
+ "tower-service",
  "tracing",
  "tracing-subscriber",
 ]

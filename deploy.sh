@@ -7,6 +7,8 @@ REGION="${REGION:-us-central1}"
 SERVICE="${SERVICE:-kairos}"
 REPO="${REPO:-kairos}"
 KAIROS_LLM="${KAIROS_LLM:-gemini}"
+KAIROS_BASIC_USER="${KAIROS_BASIC_USER:-}"
+KAIROS_BASIC_PASSWORD="${KAIROS_BASIC_PASSWORD:-}"
 PUBLIC_LB="${PUBLIC_LB:-false}"
 IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${SERVICE}:latest"
 
@@ -34,6 +36,10 @@ if ! gcloud artifacts repositories describe "${REPO}" --location="${REGION}" --p
 fi
 
 SECRET_ARGS=()
+ENV_VARS="KAIROS_LLM=${KAIROS_LLM},RUST_LOG=info,kairos=debug"
+if [ -n "${KAIROS_BASIC_USER}" ] && [ -n "${KAIROS_BASIC_PASSWORD}" ]; then
+  ENV_VARS="${ENV_VARS},KAIROS_BASIC_USER=${KAIROS_BASIC_USER},KAIROS_BASIC_PASSWORD=${KAIROS_BASIC_PASSWORD}"
+fi
 if [ "${KAIROS_LLM}" = "gemini" ]; then
   if ! gcloud secrets describe gemini-api-key --project="${PROJECT_ID}" >/dev/null 2>&1; then
     printf "%s" "${GEMINI_API_KEY}" | gcloud secrets create gemini-api-key --data-file=- --project="${PROJECT_ID}"
@@ -65,8 +71,7 @@ gcloud run deploy "${SERVICE}" \
   --max-instances 5 \
   --timeout 90s \
   --default-url \
-  --set-env-vars "KAIROS_LLM=${KAIROS_LLM}" \
-  --set-env-vars "RUST_LOG=info,kairos=debug" \
+  --set-env-vars "${ENV_VARS}" \
   "${SECRET_ARGS[@]}"
 
 # Prefer Cloud Run's public no-invoker-check path. This works when org policy

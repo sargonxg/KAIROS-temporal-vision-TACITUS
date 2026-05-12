@@ -12,12 +12,15 @@ path = "src/main.rs"
 [dependencies]
 anyhow.workspace = true
 axum.workspace = true
+base64.workspace = true
 kairos-core = { path = "../kairos-core" }
 mime_guess.workspace = true
 rust-embed.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
+tower.workspace = true
 tower-http.workspace = true
+tower-service.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true

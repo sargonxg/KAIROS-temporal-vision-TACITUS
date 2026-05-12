@@ -51,9 +51,22 @@ Still roadmap:
 - trained local neural models;
 - PyO3/WASM packaging.
 
+## Access
+
+The deployed KAIROS workbench can be protected with HTTP Basic Auth. This is intentionally server-side, so it protects the static frontend and the JSON APIs.
+
+Set both variables to enable the gate:
+
+```bash
+KAIROS_BASIC_USER="kairos"
+KAIROS_BASIC_PASSWORD="change-this-password"
+```
+
+If either variable is missing, auth is disabled. `/healthz` remains public so Cloud Run and load-balancer health checks can keep working.
+
 ## Demo
 
-Public demo:
+KAIROS demo:
 
 ```text
 http://34.54.231.53
@@ -243,11 +256,22 @@ Gemini-backed deployment:
 PROJECT_ID="kairos-temporal-tacitus" KAIROS_LLM=gemini GEMINI_API_KEY="..." ./deploy.sh
 ```
 
+Password-protected deployment:
+
+```bash
+PROJECT_ID="kairos-temporal-tacitus" \
+KAIROS_LLM=mock \
+KAIROS_BASIC_USER="kairos" \
+KAIROS_BASIC_PASSWORD="change-this-password" \
+./deploy.sh
+```
+
 The deploy script enables required Google Cloud APIs, builds the container with Cloud Build, pushes to Artifact Registry, deploys the Cloud Run service, and configures public access where org policy permits it.
 
 ## Security And Privacy
 
 - The browser Gemini key field is request-scoped.
+- Optional `KAIROS_BASIC_USER` and `KAIROS_BASIC_PASSWORD` protect the KAIROS frontend and API with server-side Basic Auth.
 - Keys are not persisted by the frontend.
 - Request-scoped keys are not serialized in `AnalysisResult`.
 - The deterministic demo can run with no LLM provider or external key.
