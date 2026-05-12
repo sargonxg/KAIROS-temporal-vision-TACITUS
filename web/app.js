@@ -99,6 +99,7 @@ function render(data, text) {
   renderAnnotated(text, data);
   renderTimeline(data);
   renderActorLanes(data);
+  renderFrictionMap(data);
   renderRelations(data, relationFilter);
   renderAco(data);
   renderCorrections(data);
@@ -209,6 +210,8 @@ function renderDiagnostics(data) {
     ${chip('non-trivial relations', d.non_trivial_relations || 0)}
     ${chip('overlap pairs', (d.dense_overlap_pairs || []).length)}
     ${chip('deadline commitments', d.deadline_commitments || 0)}
+    ${chip('frictions', d.friction_count || 0)}
+    ${chip('escalating friction', d.escalating_friction_count || 0)}
     ${chip('open-ended episodes', d.open_ended_episodes || 0)}
     ${chip('unresolved dates', d.unresolved_dates || 0)}
     <div class="diag-line"><strong>relations</strong><span>${escapeHtml(countText || 'none')}</span></div>
@@ -219,6 +222,7 @@ function renderDiagnostics(data) {
 function renderBrief(data) {
   const episodes = data.episodes || [];
   const commitments = data.commitments || [];
+  const frictions = data.frictions || [];
   const dates = data.dates || [];
   const keyEpisodes = episodes.slice(0, 4).map((ep) => `${shortDate(ep.interval.from)}: ${ep.title}`);
   const unresolved = commitments.filter((c) => /proposed|announced|authorized|ordered|signed/i.test(c.state || '')).slice(0, 4);
@@ -226,6 +230,7 @@ function renderBrief(data) {
     <p><strong>${episodes.length}</strong> episodes convert the source into a computable chronology across <strong>${dates.length}</strong> detected temporal anchors.</p>
     <p class="text-zinc-400">${escapeHtml(keyEpisodes.join(' -> ') || 'No episode bands detected yet.')}</p>
     <p><strong>Commitment watch:</strong> ${escapeHtml(unresolved.map((c) => c.summary).join(' | ') || 'No active commitments detected.')}</p>
+    <p><strong>Friction watch:</strong> ${escapeHtml(frictions.slice(0, 3).map((f) => f.summary).join(' | ') || 'No friction objects detected.')}</p>
   `;
 }
 
@@ -250,6 +255,26 @@ function renderActorLanes(data) {
   }).join('');
 }
 
+function renderFrictionMap(data) {
+  const actorsById = Object.fromEntries((data.actors || []).map((actor) => [actor.id, actor.name]));
+  const frictions = data.frictions || [];
+  $('friction-map').innerHTML = frictions.map((friction) => {
+    const actors = (friction.actors_involved || []).map((id) => actorsById[id] || id).join(' + ');
+    const evidence = (friction.evidence_spans || []).map((span) => span.text).filter(Boolean).join(' | ');
+    return `
+      <div class="friction-card">
+        <div class="friction-top">
+          <strong>${escapeHtml(kindLabel(friction.kind))}</strong>
+          <span>${escapeHtml(friction.trajectory || 'mutating')} / ${Math.round((friction.intensity || 0) * 100)}%</span>
+        </div>
+        <p>${escapeHtml(friction.summary)}</p>
+        <small>${escapeHtml(actors || 'unlinked actors')}</small>
+        ${evidence ? `<blockquote>${escapeHtml(evidence)}</blockquote>` : ''}
+      </div>
+    `;
+  }).join('') || '<div class="text-sm text-zinc-500">No friction detected yet.</div>';
+}
+
 function renderRelations(data, filter = 'interesting') {
   const epById = Object.fromEntries((data.episodes || []).map((ep) => [ep.id, ep.title]));
   const tbody = $('relations-tbody');
@@ -261,6 +286,10 @@ function renderRelations(data, filter = 'interesting') {
       <td class="py-2 text-zinc-100">${escapeHtml(epById[r.to_episode] || r.to_episode)}</td>
     </tr>
   `).join('') || '<tr><td class="py-2 text-zinc-400">No relations in this filter.</td></tr>';
+}
+
+function kindLabel(kind) {
+  return String(kind || 'custom').replaceAll('_', ' ');
 }
 
 function filterRelations(relations, filter) {

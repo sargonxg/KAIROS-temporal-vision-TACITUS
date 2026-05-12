@@ -37,9 +37,51 @@ body {
 .diag-chip,
 .diag-line,
 .lane,
+.friction-card,
 .correction-row {
   border: 1px solid #27272a;
   background: rgba(9, 9, 11, .55);
+}
+
+.friction-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-left: 3px solid #f97316;
+}
+
+.friction-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.friction-top strong {
+  color: #fed7aa;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  font-size: 12px;
+}
+
+.friction-top span,
+.friction-card small {
+  color: #a1a1aa;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+}
+
+.friction-card p {
+  margin: 0;
+  color: #f4f4f5;
+}
+
+.friction-card blockquote {
+  margin: 0;
+  border-left: 1px solid #71717a;
+  padding-left: 10px;
+  color: #d4d4d8;
+  font-size: 13px;
 }
 
 .diag-chip {

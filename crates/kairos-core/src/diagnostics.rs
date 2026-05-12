@@ -1,6 +1,7 @@
 use crate::aco::ExtractedCommitment;
 use crate::episode::Episode;
 use crate::extract::DateMention;
+use crate::friction::{Friction, FrictionKind, FrictionTrajectory};
 use crate::relations::{AllenRelation, EpisodeRelation};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};
@@ -24,6 +25,10 @@ pub struct TemporalDiagnostics {
     pub dense_overlap_pairs: Vec<DiagnosticPair>,
     pub deadline_commitments: usize,
     pub unresolved_dates: usize,
+    pub friction_count: usize,
+    pub escalating_friction_count: usize,
+    pub high_intensity_friction_count: usize,
+    pub friction_by_kind: BTreeMap<String, usize>,
     pub confidence: ConfidenceSummary,
 }
 
@@ -48,6 +53,8 @@ pub struct ValidationRequest {
     #[serde(default)]
     pub commitments: Vec<ExtractedCommitment>,
     #[serde(default)]
+    pub frictions: Vec<Friction>,
+    #[serde(default)]
     pub episodes: Vec<Episode>,
     #[serde(default)]
     pub relations: Vec<EpisodeRelation>,
@@ -56,6 +63,7 @@ pub struct ValidationRequest {
 pub fn analyze_temporal_diagnostics(
     dates: &[DateMention],
     commitments: &[ExtractedCommitment],
+    frictions: &[Friction],
     episodes: &[Episode],
     relations: &[EpisodeRelation],
 ) -> TemporalDiagnostics {
@@ -113,9 +121,24 @@ pub fn analyze_temporal_diagnostics(
                 || haystack.contains("monthly")
         })
         .count();
+    diagnostics.friction_count = frictions.len();
+    diagnostics.escalating_friction_count = frictions
+        .iter()
+        .filter(|friction| friction.trajectory == FrictionTrajectory::Escalating)
+        .count();
+    diagnostics.high_intensity_friction_count = frictions
+        .iter()
+        .filter(|friction| friction.intensity >= 0.75)
+        .count();
+    for friction in frictions {
+        *diagnostics
+            .friction_by_kind
+            .entry(friction_kind_label(&friction.kind).to_string())
+            .or_default() += 1;
+    }
 
     diagnostics.confidence = confidence_summary(episodes);
-    diagnostics.warnings = validation_warnings(dates, commitments, episodes);
+    diagnostics.warnings = validation_warnings(dates, commitments, frictions, episodes);
     diagnostics
 }
 
@@ -123,6 +146,7 @@ pub fn validate_graph(request: &ValidationRequest) -> TemporalDiagnostics {
     analyze_temporal_diagnostics(
         &request.dates,
         &request.commitments,
+        &request.frictions,
         &request.episodes,
         &request.relations,
     )
@@ -150,6 +174,7 @@ fn confidence_summary(episodes: &[Episode]) -> ConfidenceSummary {
 fn validation_warnings(
     dates: &[DateMention],
     commitments: &[ExtractedCommitment],
+    frictions: &[Friction],
     episodes: &[Episode],
 ) -> Vec<String> {
     let mut warnings = Vec::new();
@@ -183,6 +208,15 @@ fn validation_warnings(
         }
     }
 
+    for friction in frictions {
+        if friction.evidence_spans.is_empty() {
+            warnings.push(format!("friction '{}' has no evidence spans", friction.id));
+        }
+        if friction.actors_involved.is_empty() {
+            warnings.push(format!("friction '{}' has no linked actors", friction.id));
+        }
+    }
+
     for date in dates {
         if date.resolved.is_none() {
             warnings.push(format!("date '{}' could not be resolved", date.text));
@@ -192,6 +226,21 @@ fn validation_warnings(
     warnings.sort();
     warnings.dedup();
     warnings
+}
+
+fn friction_kind_label(kind: &FrictionKind) -> &'static str {
+    match kind {
+        FrictionKind::CommitmentFailure => "commitment_failure",
+        FrictionKind::ProceduralObstruction => "procedural_obstruction",
+        FrictionKind::InstitutionalDrift => "institutional_drift",
+        FrictionKind::TrustLoss => "trust_loss",
+        FrictionKind::PolicyDivergence => "policy_divergence",
+        FrictionKind::LeadershipTransition => "leadership_transition",
+        FrictionKind::LegalBlockage => "legal_blockage",
+        FrictionKind::ImplementationGap => "implementation_gap",
+        FrictionKind::Escalation => "escalation",
+        FrictionKind::Custom => "custom",
+    }
 }
 
 fn round3(value: f32) -> f32 {

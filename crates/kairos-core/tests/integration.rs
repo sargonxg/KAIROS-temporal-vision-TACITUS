@@ -8,6 +8,8 @@ async fn mock_pipeline_returns_temporal_structure() {
             text: text.to_string(),
             gemini_api_key: None,
             gemini_model: None,
+            document_id: Some("meridian-demo".to_string()),
+            document_created_at: None,
         })
         .await
         .expect("mock analysis");
@@ -24,6 +26,11 @@ async fn mock_pipeline_returns_temporal_structure() {
     );
     assert!(result.actors.len() >= 7, "expected ACO actors");
     assert!(result.commitments.len() >= 6, "expected ACO commitments");
+    assert!(result.frictions.len() >= 5, "expected friction objects");
+    assert!(
+        result.diagnostics.high_intensity_friction_count >= 3,
+        "expected high-intensity friction signal"
+    );
     assert_eq!(result.metadata.provider, "mock");
     assert_eq!(result.metadata.schema_version, "kairos.analysis.v1");
     assert!(
@@ -49,6 +56,8 @@ async fn validate_graph_returns_diagnostics_without_analysis() {
             text: text.to_string(),
             gemini_api_key: None,
             gemini_model: None,
+            document_id: None,
+            document_created_at: None,
         })
         .await
         .expect("mock analysis");
@@ -56,10 +65,52 @@ async fn validate_graph_returns_diagnostics_without_analysis() {
     let diagnostics = validate_graph(&ValidationRequest {
         dates: result.dates,
         commitments: result.commitments,
+        frictions: result.frictions,
         episodes: result.episodes,
         relations: result.relations,
     });
 
     assert!(diagnostics.non_trivial_relations >= 1);
     assert!(diagnostics.relation_counts.contains_key("Before"));
+}
+
+#[tokio::test]
+async fn dct_resolves_relative_dates() {
+    let result = Kairos::mock()
+        .analyze(AnalysisRequest {
+            text: "March 10, 2024: The cabinet opened review. Two days later, the governor objected. Next quarter, the authority will publish a ledger.".to_string(),
+            gemini_api_key: None,
+            gemini_model: None,
+            document_id: Some("relative-fixture".to_string()),
+            document_created_at: Some(
+                chrono::DateTime::parse_from_rfc3339("2024-03-10T00:00:00Z")
+                    .unwrap()
+                    .with_timezone(&chrono::Utc),
+            ),
+        })
+        .await
+        .expect("mock analysis");
+
+    assert!(
+        result
+            .dates
+            .iter()
+            .any(|date| date.text.eq_ignore_ascii_case("Two days later")
+                && date
+                    .resolved
+                    .map(|dt| dt.to_rfc3339().starts_with("2024-03-12"))
+                    .unwrap_or(false)),
+        "expected DCT anchored relative date"
+    );
+    assert!(
+        result
+            .dates
+            .iter()
+            .any(|date| date.text.eq_ignore_ascii_case("Next quarter")
+                && date
+                    .resolved
+                    .map(|dt| dt.to_rfc3339().starts_with("2024-04-01"))
+                    .unwrap_or(false)),
+        "expected next quarter resolution"
+    );
 }

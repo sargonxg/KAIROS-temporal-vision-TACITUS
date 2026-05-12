@@ -49,6 +49,7 @@ pub async fn extract_aco(llm: &LlmClient, text: &str) -> Result<AcoExtraction> {
                                 "committer": {"type": "STRING"},
                                 "committee": {"type": "STRING"},
                                 "state": {"type": "STRING"},
+                                "evidence_spans": {"type": "ARRAY", "items": {"type": "OBJECT"}},
                                 "attrs": {"type": "OBJECT"}
                             },
                             "required": ["id", "summary", "committer", "committee", "state"]
@@ -188,6 +189,7 @@ fn commitment(
         committer: committer.to_string(),
         committee: committee.to_string(),
         state: state.to_string(),
+        evidence_spans: vec![],
         attrs: json!({}),
     }
 }

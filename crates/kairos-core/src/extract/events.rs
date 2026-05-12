@@ -35,7 +35,8 @@ pub async fn extract_events(
                         "at": {"type": "STRING"},
                         "fuzziness_secs": {"type": "INTEGER"},
                         "actor_ids": {"type": "ARRAY", "items": {"type": "STRING"}},
-                        "event_kind": {"type": "STRING"}
+                        "event_kind": {"type": "STRING"},
+                        "source_span": {"type": "OBJECT"}
                     },
                     "required": ["mention", "canonical_name", "at", "actor_ids"]
                 }
@@ -77,6 +78,9 @@ fn parse_events(value: Value) -> Result<Vec<TemporalEvent>> {
                     })
                     .unwrap_or_default(),
                 event_kind: item["event_kind"].as_str().map(ToString::to_string),
+                source_span: item
+                    .get("source_span")
+                    .and_then(|span| serde_json::from_value(span.clone()).ok()),
             });
         }
     }
@@ -126,10 +130,10 @@ fn mock_events(dates: &[DateMention]) -> Vec<TemporalEvent> {
     ];
     dates
         .iter()
-        .filter_map(|d| d.resolved)
+        .filter_map(|d| d.resolved.map(|at| (d, at)))
         .take(labels.len())
         .zip(labels)
-        .map(|(at, (name, kind))| TemporalEvent {
+        .map(|((d, at), (name, kind))| TemporalEvent {
             id: format!("evt_{}", Uuid::now_v7()),
             mention: name.to_string(),
             canonical_name: name.to_string(),
@@ -137,6 +141,7 @@ fn mock_events(dates: &[DateMention]) -> Vec<TemporalEvent> {
             fuzziness_secs: 0,
             actor_ids: vec![],
             event_kind: Some(kind.to_string()),
+            source_span: d.source_span.clone(),
         })
         .collect()
 }

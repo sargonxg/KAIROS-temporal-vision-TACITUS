@@ -6,11 +6,14 @@ use crate::diagnostics::{analyze_temporal_diagnostics, AnalysisMetadata, Tempora
 use crate::episode::Episode;
 use crate::extract::aco_extract::extract_aco;
 use crate::extract::events::extract_events;
+use crate::extract::friction_extract::extract_frictions;
 use crate::extract::{DateExtractor, DateMention};
+use crate::friction::Friction;
 use crate::llm::LlmClient;
 use crate::relations::{compute, EpisodeRelation};
 use crate::store::KairosStore;
 use crate::{KairosError, Result};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::time::Instant;
 use uuid::Uuid;
@@ -22,6 +25,10 @@ pub struct AnalysisRequest {
     pub gemini_api_key: Option<String>,
     #[serde(default)]
     pub gemini_model: Option<String>,
+    #[serde(default)]
+    pub document_id: Option<String>,
+    #[serde(default)]
+    pub document_created_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -33,6 +40,7 @@ pub struct AnalysisResult {
     pub events: Vec<TemporalEvent>,
     pub actors: Vec<ExtractedActor>,
     pub commitments: Vec<ExtractedCommitment>,
+    pub frictions: Vec<Friction>,
     pub episodes: Vec<Episode>,
     pub relations: Vec<EpisodeRelation>,
 }
@@ -97,7 +105,11 @@ impl Kairos {
             "llm_extraction".to_string()
         };
 
-        let dates = DateExtractor::new().extract(text);
+        let dates = DateExtractor::new().extract_with_context(
+            text,
+            request.document_id.as_deref(),
+            request.document_created_at,
+        );
         let (events, aco) =
             tokio::join!(extract_events(&llm, text, &dates), extract_aco(&llm, text));
         let events = events?;
@@ -110,12 +122,26 @@ impl Kairos {
             actors: &aco.actors,
             commitments: &aco.commitments,
         };
-        let detector = LlmJudgeDetector::new(llm);
+        let detector = LlmJudgeDetector::new(llm.clone());
         let proposals = detector.propose(&ctx).await?;
         let episodes = reconcile(proposals);
         let relations = relations_for(&episodes);
-        let diagnostics =
-            analyze_temporal_diagnostics(&dates, &aco.commitments, &episodes, &relations);
+        let frictions = extract_frictions(
+            &llm,
+            text,
+            &events,
+            &aco.actors,
+            &aco.commitments,
+            &episodes,
+        )
+        .await?;
+        let diagnostics = analyze_temporal_diagnostics(
+            &dates,
+            &aco.commitments,
+            &frictions,
+            &episodes,
+            &relations,
+        );
         let metadata = AnalysisMetadata {
             schema_version: "kairos.analysis.v1".to_string(),
             provider,
@@ -141,6 +167,7 @@ impl Kairos {
             events,
             actors: aco.actors,
             commitments: aco.commitments,
+            frictions,
             episodes,
             relations,
         })

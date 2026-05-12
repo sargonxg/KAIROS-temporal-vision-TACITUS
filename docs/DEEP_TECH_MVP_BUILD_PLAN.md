@@ -19,7 +19,7 @@ The MVP should prove this on a 10-15 page dossier in under 60 seconds, with evid
 
 ## Build Phase 1: Evidence And Friction Core
 
-Priority: immediate.
+Priority: immediate. Status: started in the real app.
 
 ### Data Model
 
@@ -67,6 +67,15 @@ pub struct Friction {
 }
 ```
 
+Current implementation note:
+
+- `SourceSpan` is live.
+- `Friction`, `FrictionKind`, and `FrictionTrajectory` are live.
+- `AnalysisResult.frictions` is live.
+- Diagnostics include friction counts and friction-kind counts.
+- The web workbench includes a compact friction map.
+- Next hardening step: source spans for all LLM-generated events/commitments and persisted analyst corrections.
+
 ### Extraction
 
 Add a friction extractor beside ACO extraction:
@@ -106,7 +115,7 @@ Acceptance:
 
 ## Build Phase 2: DCT And Relative-Time Resolution
 
-Priority: immediate after friction.
+Priority: immediate after friction. Status: started in the real app.
 
 ### Request Contract
 
@@ -134,6 +143,12 @@ Add support for:
 - two days later
 - within 45 days
 - after the review window
+
+Current implementation note:
+
+- `document_id` and `document_created_at` are accepted by `AnalysisRequest`.
+- DCT anchoring works for `yesterday`, `tomorrow`, `last week`, `next week`, `next quarter`, `two days later`, `two days before`, `the following morning`, and `within N days`.
+- Next hardening step: weekday references, fiscal calendars, and relation-based expressions like `after the review window`.
 
 Acceptance:
 

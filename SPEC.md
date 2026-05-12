@@ -19,13 +19,16 @@ MVP+ API contract:
 - `/api/v1/analyze`: versioned alias for new clients.
 - `/api/v1/validate`: accepts extracted graph arrays and returns diagnostics without another LLM call.
 - `AnalysisResult.metadata`: schema version, provider, model, mode, input size, elapsed milliseconds.
-- `AnalysisResult.diagnostics`: warnings, relation counts, non-trivial relation count, overlap pairs, open-ended episode count, deadline commitment count, unresolved dates, confidence summary.
+- `AnalysisResult.diagnostics`: warnings, relation counts, non-trivial relation count, overlap pairs, open-ended episode count, deadline commitment count, unresolved dates, friction counts, friction kind counts, confidence summary.
 - Existing arrays remain stable: `dates`, `events`, `actors`, `commitments`, `episodes`, `relations`.
+- New MVP backbone array: `frictions`.
+- Optional request fields: `document_id` and `document_created_at` for evidence spans and DCT-relative date resolution.
 
 MVP+ UI contract:
 
 - Gemini key/model controls are visible on screen and are request-scoped only.
 - The workbench shows timeline, temporal diagnostics, temporal brief, actor lanes, annotated source, ACO extraction, filtered Allen relations, raw JSON, and browser-only analyst corrections.
+- The workbench shows a compact friction map with kind, trajectory, intensity, actors, and evidence.
 - Downloaded JSON includes `analyst_corrections`; the server does not persist corrections in this MVP+ pass.
 
 Definition of done:
@@ -34,6 +37,7 @@ Definition of done:
 - `cargo test --release` passes with mock LLM mode.
 - `cargo run --release --bin kairos-server` serves `http://localhost:8080`.
 - Demo analysis returns at least eight episodes and multiple non-before/after Allen relations in mock mode.
+- Demo analysis returns at least five human/institutional friction objects in mock mode.
 - Smoke script verifies `/healthz`, `/`, `/api/analyze`, `/api/v1/analyze`, `/api/v1/validate`, Gemini controls, and no key leakage.
 - Cloud Run deployment is handled by `deploy.sh`.
 

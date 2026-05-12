@@ -23,6 +23,9 @@ Current deep-tech build plan: `docs/DEEP_TECH_MVP_BUILD_PLAN.md`.
 | Public Google Cloud front door | Live | External HTTP load balancer at `http://34.54.231.53` backed by a Cloud Run serverless NEG. |
 | No-key demo mode | Live | `KAIROS_LLM=mock` returns a complex deterministic policy scenario. |
 | Request-scoped Gemini testing | Live | UI and API accept a temporary Gemini key for one run; it is not saved or returned. |
+| Source spans | Live | Dates and mock events now carry source spans; friction evidence is grounded in source text. |
+| Human friction objects | Live | Mock and Gemini extraction paths produce typed friction objects with kind, trajectory, intensity, actors, commitments, episodes, and evidence. |
+| DCT-relative time | Live | Optional `document_created_at` resolves relative expressions like `two days later` and `next quarter`. |
 
 ## MVP+ Implemented
 
@@ -46,8 +49,8 @@ Current deep-tech build plan: `docs/DEEP_TECH_MVP_BUILD_PLAN.md`.
 | Confidence and contradiction scoring | Policy users need trust posture, not just output. | Compare event evidence, temporal constraints, and model confidence into a structured warning layer. |
 | Rich ACO extraction | Claims, interests, constraints, leverage, events, and narratives unlock deeper conflict reasoning. | Extend `aco.rs` and `extract_aco` with typed arrays for all 8 ACO primitives. |
 | Calibration pack | Enables regression tests on real policy scenarios. | Keep a suite of gold demo cases under `examples/` with expected episode/relation counts. |
-| Human friction objects | Captures broken commitments, obstruction, trust loss, institutional drift, and escalation. | Add `Friction` schemas, Gemini/mock extractor, diagnostics, and a UI friction map. |
-| DCT-relative time | Large policy documents use "next quarter", "two weeks later", and review windows constantly. | Add `document_created_at` and relative date resolution tests. |
+| Richer friction learning | Captures broken commitments, obstruction, trust loss, institutional drift, and escalation across many domains. | Persist analyst corrections and use accepted examples as prompt/regression fixtures. |
+| Broader relative time | Large policy documents use "next quarter", "two weeks later", and review windows constantly. | Expand DCT rules to more calendars, fiscal quarters, weekday references, and language variants. |
 | Large-text chunking | KAIROS must handle dossiers, not only pasted paragraphs. | Add structural chunking, temporal overlap, reduce-pass merging, and no-drop source-span accounting. |
 
 ## Product Integration Pattern

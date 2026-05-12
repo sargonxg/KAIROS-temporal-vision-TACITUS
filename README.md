@@ -50,8 +50,10 @@ KAIROS outputs:
 - `events`: canonical temporal events with anchors.
 - `actors`: TACITUS ACO actor primitives.
 - `commitments`: who committed what, to whom, in what state.
+- `frictions`: broken commitments, obstruction, drift, trust loss, implementation gaps, and escalation pressure.
 - `episodes`: coherent intervals with boundaries, anchors, confidence, and review state.
 - `relations`: pairwise Allen-13 temporal relations.
+- `diagnostics`: relation counts, friction counts, unresolved dates, warnings, and confidence posture.
 
 ## Why It Matters
 
@@ -137,6 +139,8 @@ curl -s -X POST http://localhost:8080/api/analyze \
   -H 'Content-Type: application/json' \
   -d '{
     "text": "January 15, 2024: Riverdale announces rationing. March 12, 2024: leadership changes.",
+    "document_id": "demo-brief-001",
+    "document_created_at": "2024-03-12T00:00:00Z",
     "gemini_api_key": "optional-per-request-key",
     "gemini_model": "gemini-2.5-flash"
   }'
@@ -160,6 +164,10 @@ Response shape:
     "relation_counts": {"Before": 14, "Overlaps": 6},
     "non_trivial_relations": 42,
     "open_ended_episodes": 0,
+    "friction_count": 6,
+    "escalating_friction_count": 2,
+    "high_intensity_friction_count": 5,
+    "friction_by_kind": {"commitment_failure": 1, "institutional_drift": 1},
     "dense_overlap_pairs": [],
     "deadline_commitments": 4,
     "unresolved_dates": 0,
@@ -169,12 +177,15 @@ Response shape:
   "events": [],
   "actors": [],
   "commitments": [],
+  "frictions": [],
   "episodes": [],
   "relations": []
 }
 ```
 
 `gemini_api_key` and `gemini_model` are optional and request-scoped. When a key is present, that analysis uses Gemini even if the deployed server default is mock mode.
+
+`document_id` and `document_created_at` are optional but important for serious use. When `document_created_at` is present, KAIROS can resolve relative expressions like `two days later`, `next week`, and `next quarter` against the document creation time.
 
 Validate an existing graph without another LLM call:
 
@@ -193,6 +204,7 @@ The built-in Meridian Compact Crisis mock demo currently returns:
 17 events
 7 actors
 6 commitments
+6 friction objects
 8 episodes
 56 Allen relations
 42 non-trivial relations

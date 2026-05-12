@@ -1,3 +1,4 @@
+use crate::source::SourceSpan;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -23,6 +24,8 @@ pub struct TemporalEvent {
     pub fuzziness_secs: u32,
     pub actor_ids: Vec<String>,
     pub event_kind: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_span: Option<SourceSpan>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
@@ -41,6 +44,8 @@ pub struct ExtractedCommitment {
     pub committer: String,
     pub committee: String,
     pub state: String,
+    #[serde(default)]
+    pub evidence_spans: Vec<SourceSpan>,
     #[serde(default)]
     pub attrs: serde_json::Value,
 }

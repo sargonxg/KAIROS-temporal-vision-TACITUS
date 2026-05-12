@@ -29,6 +29,8 @@ $body = @{
 $analysis = Invoke-RestMethod -Uri "$base/api/analyze" -Method Post -ContentType "application/json" -Body $body
 Assert-True ($analysis.metadata.schema_version -eq "kairos.analysis.v1") "analysis metadata missing"
 Assert-True ($null -ne $analysis.diagnostics) "analysis diagnostics missing"
+Assert-True ($analysis.frictions.Count -ge 5) "friction extraction missing expected signal"
+Assert-True ($analysis.diagnostics.friction_count -ge 5) "friction diagnostics missing expected signal"
 Assert-True (($analysis | ConvertTo-Json -Depth 20) -notmatch "gemini_api_key") "response leaked Gemini key field"
 
 $analysisV1 = Invoke-RestMethod -Uri "$base/api/v1/analyze" -Method Post -ContentType "application/json" -Body $body
@@ -37,6 +39,7 @@ Assert-True ($analysisV1.metadata.schema_version -eq "kairos.analysis.v1") "v1 a
 $validateBody = @{
   dates = $analysis.dates
   commitments = $analysis.commitments
+  frictions = $analysis.frictions
   episodes = $analysis.episodes
   relations = $analysis.relations
 } | ConvertTo-Json -Depth 20

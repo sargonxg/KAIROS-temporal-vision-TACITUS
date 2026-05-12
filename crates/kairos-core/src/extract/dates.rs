@@ -1,4 +1,5 @@
-use chrono::{DateTime, NaiveDate, TimeZone, Utc};
+use crate::source::SourceSpan;
+use chrono::{DateTime, Datelike, Duration, NaiveDate, TimeZone, Utc};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
@@ -10,6 +11,8 @@ pub struct DateMention {
     pub resolved: Option<DateTime<Utc>>,
     pub fuzziness_secs: u32,
     pub kind: DateMentionKind,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_span: Option<SourceSpan>,
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -19,6 +22,8 @@ pub enum DateMentionKind {
     YearOnly,
     MonthYear,
     Iso,
+    Relative,
+    Duration,
 }
 
 pub struct DateExtractor {
@@ -26,6 +31,8 @@ pub struct DateExtractor {
     rx_month_year: Regex,
     rx_year: Regex,
     rx_iso: Regex,
+    rx_relative: Regex,
+    rx_within_days: Regex,
 }
 
 impl Default for DateExtractor {
@@ -44,10 +51,24 @@ impl DateExtractor {
             rx_year: Regex::new(r"(?i)\b(?:in|by|since|during|until)\s+(20\d{2}|19\d{2})\b")
                 .unwrap(),
             rx_iso: Regex::new(r"\b(\d{4})-(\d{2})-(\d{2})\b").unwrap(),
+            rx_relative: Regex::new(
+                r"(?i)\b(yesterday|tomorrow|last week|next week|next quarter|two days later|two days before|the following morning)\b",
+            )
+            .unwrap(),
+            rx_within_days: Regex::new(r"(?i)\bwithin\s+(\d{1,3})\s+days?\b").unwrap(),
         }
     }
 
     pub fn extract(&self, text: &str) -> Vec<DateMention> {
+        self.extract_with_context(text, None, None)
+    }
+
+    pub fn extract_with_context(
+        &self,
+        text: &str,
+        doc_id: Option<&str>,
+        document_created_at: Option<DateTime<Utc>>,
+    ) -> Vec<DateMention> {
         let mut out = Vec::new();
         let mut taken: Vec<(usize, usize)> = Vec::new();
 
@@ -64,6 +85,7 @@ impl DateExtractor {
                 resolved,
                 fuzziness_secs: 0,
                 kind: DateMentionKind::Iso,
+                source_span: Some(SourceSpan::new(doc_id, m.start(), m.end(), text)),
             });
             taken.push((m.start(), m.end()));
         }
@@ -81,6 +103,7 @@ impl DateExtractor {
                 resolved,
                 fuzziness_secs: 0,
                 kind: DateMentionKind::Absolute,
+                source_span: Some(SourceSpan::new(doc_id, m.start(), m.end(), text)),
             });
             taken.push((m.start(), m.end()));
         }
@@ -98,6 +121,7 @@ impl DateExtractor {
                 resolved,
                 fuzziness_secs: 60 * 60 * 24 * 31,
                 kind: DateMentionKind::MonthYear,
+                source_span: Some(SourceSpan::new(doc_id, m.start(), m.end(), text)),
             });
             taken.push((m.start(), m.end()));
         }
@@ -115,13 +139,96 @@ impl DateExtractor {
                 resolved,
                 fuzziness_secs: 60 * 60 * 24 * 365,
                 kind: DateMentionKind::YearOnly,
+                source_span: Some(SourceSpan::new(doc_id, m.start(), m.end(), text)),
+            });
+            taken.push((m.start(), m.end()));
+        }
+
+        for cap in self.rx_relative.captures_iter(text) {
+            let m = cap.get(0).unwrap();
+            if overlaps(m.start(), m.end(), &taken) {
+                continue;
+            }
+            let resolved = document_created_at.and_then(|dct| resolve_relative(m.as_str(), dct));
+            out.push(DateMention {
+                text: m.as_str().to_string(),
+                char_start: m.start(),
+                char_end: m.end(),
+                resolved,
+                fuzziness_secs: 60 * 60 * 24,
+                kind: DateMentionKind::Relative,
+                source_span: Some(SourceSpan::new(doc_id, m.start(), m.end(), text)),
+            });
+            taken.push((m.start(), m.end()));
+        }
+
+        for cap in self.rx_within_days.captures_iter(text) {
+            let m = cap.get(0).unwrap();
+            if overlaps(m.start(), m.end(), &taken) {
+                continue;
+            }
+            let days = cap
+                .get(1)
+                .and_then(|n| n.as_str().parse::<i64>().ok())
+                .unwrap_or(0);
+            let resolved = document_created_at.map(|dct| dct + Duration::days(days));
+            out.push(DateMention {
+                text: m.as_str().to_string(),
+                char_start: m.start(),
+                char_end: m.end(),
+                resolved,
+                fuzziness_secs: (60 * 60 * 24 * days.max(1)) as u32,
+                kind: DateMentionKind::Duration,
+                source_span: Some(SourceSpan::new(doc_id, m.start(), m.end(), text)),
             });
             taken.push((m.start(), m.end()));
         }
 
         out.sort_by_key(|d| d.char_start);
+        resolve_contextual_relatives(&mut out, document_created_at);
         out
     }
+}
+
+fn resolve_contextual_relatives(
+    mentions: &mut [DateMention],
+    document_created_at: Option<DateTime<Utc>>,
+) {
+    let mut previous_resolved = document_created_at;
+    for mention in mentions {
+        if mention.resolved.is_none() && mention.kind == DateMentionKind::Relative {
+            mention.resolved = previous_resolved.and_then(|anchor| resolve_relative(&mention.text, anchor));
+        }
+        if mention.resolved.is_some() && !matches!(mention.kind, DateMentionKind::Duration) {
+            previous_resolved = mention.resolved;
+        }
+    }
+}
+
+fn resolve_relative(text: &str, dct: DateTime<Utc>) -> Option<DateTime<Utc>> {
+    let day = match text.to_lowercase().as_str() {
+        "yesterday" => dct - Duration::days(1),
+        "tomorrow" => dct + Duration::days(1),
+        "last week" => dct - Duration::days(7),
+        "next week" => dct + Duration::days(7),
+        "two days later" => dct + Duration::days(2),
+        "two days before" => dct - Duration::days(2),
+        "the following morning" => dct + Duration::days(1),
+        "next quarter" => return next_quarter_start(dct),
+        _ => return None,
+    };
+    Some(Utc.from_utc_datetime(&day.date_naive().and_hms_opt(0, 0, 0)?))
+}
+
+fn next_quarter_start(dct: DateTime<Utc>) -> Option<DateTime<Utc>> {
+    let month = dct.month();
+    let next = match month {
+        1..=3 => (dct.year(), 4),
+        4..=6 => (dct.year(), 7),
+        7..=9 => (dct.year(), 10),
+        _ => (dct.year() + 1, 1),
+    };
+    Some(Utc.from_utc_datetime(&NaiveDate::from_ymd_opt(next.0, next.1, 1)?.and_hms_opt(0, 0, 0)?))
 }
 
 fn overlaps(s: usize, e: usize, taken: &[(usize, usize)]) -> bool {
