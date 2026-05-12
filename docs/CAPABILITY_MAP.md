@@ -2,6 +2,9 @@
 
 This map is the working contract for turning KAIROS from an MVP into a temporal backbone for TACITUS products.
 
+Latest research source: `docs/research/KAIROS_Temporal_Vision_Engine_Development.md`.
+Current deep-tech build plan: `docs/DEEP_TECH_MVP_BUILD_PLAN.md`.
+
 ## Live In This Repo
 
 | Capability | Status | Evidence |
@@ -43,6 +46,9 @@ This map is the working contract for turning KAIROS from an MVP into a temporal 
 | Confidence and contradiction scoring | Policy users need trust posture, not just output. | Compare event evidence, temporal constraints, and model confidence into a structured warning layer. |
 | Rich ACO extraction | Claims, interests, constraints, leverage, events, and narratives unlock deeper conflict reasoning. | Extend `aco.rs` and `extract_aco` with typed arrays for all 8 ACO primitives. |
 | Calibration pack | Enables regression tests on real policy scenarios. | Keep a suite of gold demo cases under `examples/` with expected episode/relation counts. |
+| Human friction objects | Captures broken commitments, obstruction, trust loss, institutional drift, and escalation. | Add `Friction` schemas, Gemini/mock extractor, diagnostics, and a UI friction map. |
+| DCT-relative time | Large policy documents use "next quarter", "two weeks later", and review windows constantly. | Add `document_created_at` and relative date resolution tests. |
+| Large-text chunking | KAIROS must handle dossiers, not only pasted paragraphs. | Add structural chunking, temporal overlap, reduce-pass merging, and no-drop source-span accounting. |
 
 ## Product Integration Pattern
 

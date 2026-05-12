@@ -2,6 +2,8 @@
 
 This backlog converts the temporal-vision research brief into an implementation sequence for KAIROS as a TACITUS backbone component.
 
+The deeper follow-on plan is `docs/DEEP_TECH_MVP_BUILD_PLAN.md`. It should be treated as the next implementation queue after the current MVP+ workbench.
+
 ## Shipped In MVP+
 
 - Versioned API alias: `/api/v1/analyze`.
@@ -29,6 +31,10 @@ This backlog converts the temporal-vision research brief into an implementation 
 4. **Demo screenshot and API examples**
    - Add public-facing screenshots and richer curl examples to README.
    - Acceptance: a new developer can run, test, and deploy without chat context.
+
+5. **Human friction schema and extractor**
+   - Add computable friction objects for commitment failure, obstruction, drift, trust loss, and escalation.
+   - Acceptance: Meridian demo returns at least five friction objects, visible in the UI and linked to evidence.
 
 ## Next 2-4 Weeks
 

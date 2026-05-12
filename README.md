@@ -236,6 +236,8 @@ Read more:
 - `docs/ARCHITECTURE.md` explains the Rust crates, temporal model, Allen-13 relation layer, and learning path.
 - `docs/CAPABILITY_MAP.md` tracks what is live now and what turns KAIROS into a TACITUS backbone.
 - `docs/ROADMAP_MVP_PLUS.md` converts the deep research brief into an implementation backlog.
+- `docs/DEEP_TECH_MVP_BUILD_PLAN.md` turns the latest research into the next engineering plan: friction objects, source spans, DCT-relative time, contradiction checks, large-text chunking, and graph export.
+- `docs/research/KAIROS_Temporal_Vision_Engine_Development.md` preserves the imported Gemini deep-research report.
 - `examples/demo-text.md` contains the Meridian Compact Crisis.
 
 ## License
