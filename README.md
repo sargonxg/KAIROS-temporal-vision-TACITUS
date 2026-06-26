@@ -2,6 +2,11 @@
 
 **Rust-first temporal vision for [TACITUS](https://www.tacitus.me).**
 
+[![Rust](https://img.shields.io/badge/Rust-2021-orange?logo=rust)](Cargo.toml)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+![Status](https://img.shields.io/badge/status-experimental-yellow)
+![Deploy](https://img.shields.io/badge/deploy-Cloud%20Run-4285F4)
+
 KAIROS turns long-form political, legal, diplomatic, and institutional text into a **temporal knowledge graph**: dated events, canonical actors, commitments, friction, hypotheses, episodes, Allen-13 temporal relations, and source-grounded evidence spans.
 
 > ⚠️ **Experimental work in progress.** MVP+ library and demo, breaking changes possible.
