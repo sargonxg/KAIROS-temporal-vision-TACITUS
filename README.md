@@ -7,6 +7,13 @@ KAIROS turns long-form political, legal, diplomatic, and institutional text into
 > ⚠️ **Experimental work in progress.** MVP+ library and demo, breaking changes possible.
 > **Feedback, issues, PRs welcome** — see [Status & how to engage](#status--how-to-engage).
 
+## 30-Second Read
+
+- **What it is**: a Rust temporal extraction engine for policy, legal, diplomatic, and institutional text.
+- **What it proves today**: deterministic temporal parsing, event and commitment extraction, episode grouping, Allen-13 relation output, graph export, and a demo UI/API.
+- **What it is not yet**: a production decision system, a legal analysis product, or a full PRAXIS/DIALECTICA replacement.
+- **Best place to start**: run the deterministic mock mode in [Quick Start](#quick-start), then read [SPEC.md](SPEC.md) and [ROADMAP.md](ROADMAP.md).
+
 ```text
 TACITUS → KAIROS
 raw prose → conflict vision → temporal graph → policy reasoning
@@ -58,7 +65,7 @@ KAIROS is one of three repos in the TACITUS conflict-intelligence stack. **It is
 |---|---|---|
 | **KAIROS** (this repo) | Temporal engine | You need a temporal knowledge graph with Allen-13 relations + commitment state |
 | [**AGON**](https://github.com/sargonxg/AGON) | Evidence engine | You need claim verification + contradiction detection + friction maps |
-| [**DIALECTICA**](https://github.com/sargonxg/A2_DIALECTICAbyTACITUS) | Reasoning core + conductor | You want full conflict intelligence: ontology, agents, GraphRAG, multi-tenant API |
+| [**DIALECTICA**](https://github.com/sargonxg/A3_DIALECTICAbyTACITUS_v3) | Capsule and reasoning core | You want source-grounded context capsules, ontology blueprints, graph outputs, and review gates |
 
 ```
 text → KAIROS (when, in what order, what's still pending)
@@ -68,7 +75,7 @@ text → KAIROS (when, in what order, what's still pending)
 
 In the wired stack, KAIROS runs as a **pre-pass** on DIALECTICA's extraction pipeline. KAIROS extracts dates, events, commitments, and episodes; DIALECTICA's Gemini extractor then operates over that scaffold instead of raw text — dramatically better recall + precision on relationships.
 
-📖 **Integration contract:** see DIALECTICA's [`docs/integration/`](https://github.com/sargonxg/A2_DIALECTICAbyTACITUS/tree/main/docs/integration) — particularly `CONTRACTS.md`, `ONTOLOGY_MAPPING.md`, and `INTEGRATION_GUIDE.md`.
+📖 **Integration direction:** see the current DIALECTICA v3 repository: [`A3_DIALECTICAbyTACITUS_v3`](https://github.com/sargonxg/A3_DIALECTICAbyTACITUS_v3).
 
 KAIROS's API contract (`POST /api/v1/analyze`) is the integration surface. The AGON-side mirror of the shared `tacitus-contracts` types lives at [`docs/INTEROP.md`](docs/INTEROP.md) (planned).
 
