@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use KAIROS in research, evaluation, or derivative work, please cite this repository."
+title: "KAIROS: Temporal Analysis for Policy and Institutional Text"
+type: software
+authors:
+  - given-names: Giulio
+    family-names: Catanzariti
+    affiliation: TACITUS
+    email: hello@tacitus.me
+repository-code: "https://github.com/sargonxg/KAIROS-temporal-vision-TACITUS"
+url: "https://www.tacitus.me"
+license: Apache-2.0
+abstract: >-
+  KAIROS is an experimental Rust-first system for building source-grounded
+  temporal knowledge graphs from policy, legal, diplomatic, and institutional
+  text, including events, actors, commitments, episodes, uncertainty, and
+  Allen-13 temporal relations.
+keywords:
+  - temporal reasoning
+  - policy analysis
+  - knowledge graphs
+  - provenance
+  - diplomacy
+  - Rust
