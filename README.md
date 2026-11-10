@@ -68,7 +68,7 @@ Core design choices:
 
 ## Local quick start
 
-Requirements: a recent Rust toolchain. Mock mode does not require an external model key.
+Requirements: Rust 1.95.0 or newer. Mock mode does not require an external model key.
 
 ```bash
 git clone https://github.com/sargonxg/KAIROS-temporal-vision-TACITUS.git
@@ -77,7 +77,7 @@ cargo test
 KAIROS_LLM=mock cargo run --release --bin kairos-server
 ```
 
-The server is intended to listen locally on port `8080`.
+The server binds to `127.0.0.1:8080` by default. Set `KAIROS_BIND_ADDRESS` to an explicit IP when another interface is needed; the Docker image sets `0.0.0.0` for container ingress. `PORT` must be 1–65535. Binding outside loopback does not add authentication; retain the documented deployment controls.
 
 Optional Gemini-backed extraction:
 
@@ -101,6 +101,12 @@ curl -X POST http://localhost:8080/api/v1/analyze \
 ```
 
 Additional endpoints expose graph output and validation. The API contract, not any particular hosted instance, is the intended integration surface.
+
+## Inspect the temporal workbench
+
+![Actual KAIROS interface running the deterministic synthetic Meridian example](docs/images/mock-temporal-workbench.png)
+
+This screenshot comes from the locally running server with `KAIROS_LLM=mock`. The scenario is synthetic. It demonstrates the interface and temporal representation, not live extraction accuracy or a real political assessment.
 
 ## Place in the TACITUS stack
 

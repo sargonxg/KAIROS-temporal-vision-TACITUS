@@ -20,6 +20,6 @@ RUN cargo build --release --bin kairos-server
 FROM gcr.io/distroless/cc-debian12:nonroot
 COPY --from=builder /app/target/release/kairos-server /usr/local/bin/kairos-server
 USER nonroot
-ENV PORT=8080 RUST_LOG=info,kairos=debug
+ENV PORT=8080 KAIROS_BIND_ADDRESS=0.0.0.0 RUST_LOG=info,kairos=debug
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/kairos-server"]

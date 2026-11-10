@@ -10,7 +10,7 @@ use rust_embed::RustEmbed;
 use std::convert::Infallible;
 use std::env;
 use std::future::Future;
-use std::net::SocketAddr;
+use std::net::{IpAddr, SocketAddr};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use tower_http::cors::CorsLayer;
@@ -43,12 +43,55 @@ async fn main() -> anyhow::Result<()> {
         .layer(TraceLayer::new_for_http())
         .with_state(Kairos::from_env());
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
-    let addr: SocketAddr = format!("0.0.0.0:{port}").parse()?;
+    let addr = listen_address(
+        env::var("KAIROS_BIND_ADDRESS").ok().as_deref(),
+        env::var("PORT").ok().as_deref(),
+    )?;
     tracing::info!(%addr, "kairos-server listening");
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await?;
     Ok(())
+}
+
+fn listen_address(host: Option<&str>, port: Option<&str>) -> anyhow::Result<SocketAddr> {
+    let host: IpAddr = host.unwrap_or("127.0.0.1").parse()?;
+    let port: u16 = port.unwrap_or("8080").parse()?;
+    anyhow::ensure!(port != 0, "PORT must be between 1 and 65535");
+    Ok(SocketAddr::new(host, port))
+}
+
+#[cfg(test)]
+mod listen_tests {
+    use super::listen_address;
+    #[test]
+    fn local_default_does_not_listen_on_all_interfaces() {
+        assert_eq!(
+            listen_address(None, None).unwrap().to_string(),
+            "127.0.0.1:8080"
+        );
+    }
+    #[test]
+    fn container_binding_is_explicit_and_ipv6_is_supported() {
+        assert_eq!(
+            listen_address(Some("0.0.0.0"), Some("8081"))
+                .unwrap()
+                .to_string(),
+            "0.0.0.0:8081"
+        );
+        assert_eq!(
+            listen_address(Some("::1"), Some("8082"))
+                .unwrap()
+                .to_string(),
+            "[::1]:8082"
+        );
+    }
+    #[test]
+    fn invalid_configuration_refuses_instead_of_using_another_port() {
+        assert!(listen_address(Some("not-an-ip"), None).is_err());
+        for port in ["0", "65536", "no"] {
+            assert!(listen_address(None, Some(port)).is_err());
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
