@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum DocumentType {
     Memo,
     Transcript,
@@ -16,13 +17,8 @@ pub enum DocumentType {
     CrisisBrief,
     NewsReport,
     Dossier,
+    #[default]
     Unknown,
-}
-
-impl Default for DocumentType {
-    fn default() -> Self {
-        Self::Unknown
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]

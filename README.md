@@ -3,6 +3,8 @@
 <!-- tacitus-practical-entry -->
 ## Purpose, code and a playable introduction
 
+[Current local Rust verification and remaining acceptance gates](docs/LOCAL_VERIFICATION_2026-11-12.md)
+
 Preserve dates, intervals, reported events and commitment changes instead of flattening a dossier into an undated summary.
 
 **Experimental temporal engine.** Experimental temporal engine; temporal relation consistency is not proof of causation, a completed commitment or accurate source interpretation.
