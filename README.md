@@ -1,5 +1,20 @@
 # KAIROS
 
+<!-- tacitus-practical-entry -->
+## Purpose, code and a playable introduction
+
+Preserve dates, intervals, reported events and commitment changes instead of flattening a dossier into an undated summary.
+
+**Experimental temporal engine.** Experimental temporal engine; temporal relation consistency is not proof of causation, a completed commitment or accurate source interpretation.
+
+[Setup, code walkthrough, research & verification](TACITUS_GUIDE.md) · [Play the original 8-bit teaching adventure](tacitus-demo/index.html) · [Demo credits](tacitus-demo/CREDITS.md)
+
+![The original House of Evidence teaching adventure; synthetic case, separate from this project’s runtime](tacitus-demo/mansion.png)
+
+Research: [RAG](https://arxiv.org/abs/2005.11401), [long-context evidence use](https://arxiv.org/abs/2307.03172), [GraphRAG](https://arxiv.org/abs/2404.16130). [What TACITUS borrows, adds and still needs to measure](https://github.com/sargonxg/sargonxg/blob/main/docs/RESEARCH_AND_DESIGN.md).
+<!-- /tacitus-practical-entry -->
+
+
 **Rust-first temporal analysis for policy, legal, diplomatic, and institutional text.**
 
 [![Rust](https://img.shields.io/badge/Rust-2021-orange?logo=rust)](Cargo.toml)
