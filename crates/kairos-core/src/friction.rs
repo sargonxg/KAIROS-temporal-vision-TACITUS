@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum FrictionKind {
     CommitmentFailure,
     ProceduralObstruction,
@@ -16,33 +17,26 @@ pub enum FrictionKind {
     LegalBlockage,
     ImplementationGap,
     Escalation,
+    #[default]
     Custom,
-}
-
-impl Default for FrictionKind {
-    fn default() -> Self {
-        Self::Custom
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum FrictionTrajectory {
     Escalating,
     Resolving,
     Freezing,
+    #[default]
     Mutating,
-}
-
-impl Default for FrictionTrajectory {
-    fn default() -> Self {
-        Self::Mutating
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum FrictionPolarity {
+    #[default]
     Conflict,
     Cooperation,
     Ambiguity,
@@ -50,14 +44,9 @@ pub enum FrictionPolarity {
     Asymmetry,
 }
 
-impl Default for FrictionPolarity {
-    fn default() -> Self {
-        Self::Conflict
-    }
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum FrictionMechanism {
     Delay,
     Noncompliance,
@@ -68,42 +57,29 @@ pub enum FrictionMechanism {
     ProceduralBlock,
     TrustLoss,
     ImplementationGap,
+    #[default]
     Unknown,
-}
-
-impl Default for FrictionMechanism {
-    fn default() -> Self {
-        Self::Unknown
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum FrictionDirectness {
+    #[default]
     Explicit,
     Implied,
     Inferred,
 }
 
-impl Default for FrictionDirectness {
-    fn default() -> Self {
-        Self::Explicit
-    }
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum EvidenceGrade {
     DirectQuote,
+    #[default]
     Paraphrase,
     TemporalInference,
     CrossEventInference,
-}
-
-impl Default for EvidenceGrade {
-    fn default() -> Self {
-        Self::Paraphrase
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
